@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jsperson.inbox-processor</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/jsperson/.claude/local/claude</string>
+        <string>--print</string>
+        <string>/process-inbox</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/jsperson/source/second_brain</string>
+
+    <!-- Run every 300 seconds (5 minutes) -->
+    <key>StartInterval</key>
+    <integer>300</integer>
+
+    <!-- Also run immediately when loaded -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/jsperson/.imessage-capture/inbox-processor.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/jsperson/.imessage-capture/inbox-processor-error.log</string>
+
+    <!-- Environment for Claude -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/jsperson</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/Users/jsperson/.claude/local</string>
+    </dict>
+</dict>
+</plist>

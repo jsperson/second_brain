@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.jsperson.imessage-capture</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/open</string>
+        <string>/Users/jsperson/Applications/iMessageCapture.app</string>
+    </array>
+
+    <!-- Run every 60 seconds (1 minute) -->
+    <key>StartInterval</key>
+    <integer>60</integer>
+
+    <!-- Also run immediately when loaded (at boot/login) -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/jsperson/.imessage-capture/launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/jsperson/.imessage-capture/launchd-error.log</string>
+
+    <!-- Restart if it crashes -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+</dict>
+</plist>

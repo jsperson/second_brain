@@ -1,0 +1,185 @@
+# Second Brain
+
+A personal knowledge management system that captures thoughts via iMessage and automatically classifies and routes them to Obsidian.
+
+## Overview
+
+This system implements the "Second Brain" workflow:
+
+1. **Capture** - Send a thought to yourself via iMessage (5 seconds)
+2. **Classify** - Claude Code automatically categorizes the capture
+3. **Route** - Content is filed to the appropriate Obsidian folder
+4. **Review** - Daily and weekly digests surface what matters
+
+## Architecture
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   iMessage  │────▶│   Inbox/    │────▶│ Claude Code │────▶│ Destination │
+│  to self    │     │  (capture)  │     │ (classify)  │     │   folder    │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+       │                                                            │
+       │                    ┌─────────────┐                        │
+       └───────────────────▶│  fix: xxx   │────────────────────────┘
+           (corrections)    └─────────────┘
+```
+
+## Categories
+
+| Category | Destination | Description |
+|----------|-------------|-------------|
+| Projects | `Projects/{Name}/` | Multi-step work, ongoing tasks |
+| Ideas | `Knowledge/Ideas/` | Thoughts, concepts to explore |
+| People | `Knowledge/People/` | Contact info, relationship notes |
+| Tasks | `Tasks/` | Simple errands, items with due dates |
+| Unclear | `Inbox/` (stays) | Low confidence, needs human review |
+
+## Components
+
+### Scripts
+
+- **imessage_capture.py** - Monitors Messages database, writes captures to Obsidian Inbox
+- **Launchd plists** - Schedule automation jobs
+
+### Claude Code Skills
+
+- **/process-inbox** - Classify and route unprocessed captures
+- **/daily-digest** - Generate daily summary (tasks, projects, people)
+- **/weekly-review** - Generate weekly review with patterns
+
+### Automation Schedule
+
+| Job | Frequency | Purpose |
+|-----|-----------|---------|
+| iMessage Capture | Every 1 min | Capture new messages |
+| Inbox Processor | Every 5 min | Classify and route |
+| Daily Digest | 7:00 AM | Morning summary |
+| Weekly Review | Sunday 4 PM | Week in review |
+
+## Quick Start
+
+### Capture a Thought
+
+Just send yourself an iMessage:
+```
+Project: finish the Q1 report by Friday
+```
+
+The system will:
+1. Capture it to `Inbox/`
+2. Classify it as "projects"
+3. Route to `Projects/Q1-Report/`
+4. Log to `Inbox-Log.md`
+
+### Correct a Mistake
+
+If the AI misclassifies, send another iMessage:
+```
+fix: should be tasks
+```
+
+The most recent capture will be reclassified and moved.
+
+### Manual Commands
+
+Run skills directly in Claude Code:
+```
+/process-inbox    # Process pending captures now
+/daily-digest     # Generate daily summary now
+/weekly-review    # Generate weekly review now
+```
+
+## File Structure
+
+```
+second_brain/
+├── CLAUDE.md              # Claude Code instructions
+├── README.md              # This file
+├── scripts/
+│   ├── imessage_capture.py
+│   ├── com.jsperson.imessage-capture.plist
+│   ├── com.jsperson.inbox-processor.plist
+│   ├── com.jsperson.daily-digest.plist
+│   └── com.jsperson.weekly-review.plist
+├── skills/
+│   ├── process-inbox.md
+│   ├── daily-digest.md
+│   └── weekly-review.md
+└── docs/
+    └── installation.md
+```
+
+## Obsidian Vault Structure
+
+```
+scott/
+├── Inbox/                  # Captures land here
+├── Inbox-Log.md           # Classification audit log
+├── Projects/              # Active projects
+├── Knowledge/
+│   ├── Ideas/             # Ideas and concepts
+│   └── People/            # Contact notes
+├── Tasks/                 # Actionable items
+└── ...
+```
+
+## Dependencies
+
+- **macOS** - Uses Messages.app database and launchd
+- **Claude Code** - For classification and skills
+- **Obsidian** - Note storage (iCloud synced)
+- **Automator** - App wrapper for Full Disk Access
+
+## Installation
+
+See [docs/installation.md](docs/installation.md) for detailed setup instructions.
+
+## Configuration
+
+### Monitored iMessage Handles
+
+The capture script monitors messages to these handles (edit in `imessage_capture.py`):
+- `+17038673475` (phone number)
+- `jsperson@gmail.com` (Apple ID)
+
+### Obsidian Paths
+
+Default paths assume vault at:
+```
+/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/
+```
+
+## Troubleshooting
+
+### Captures not appearing
+
+1. Check launchd job is running:
+   ```bash
+   launchctl list | grep imessage-capture
+   ```
+
+2. Check logs:
+   ```bash
+   tail ~/.imessage-capture/launchd-error.log
+   ```
+
+3. Verify Full Disk Access for Automator app
+
+### Classification not running
+
+1. Verify Claude Code is installed and authenticated
+2. Check inbox processor logs
+3. Ensure Inbox has files with `processed: false`
+
+### Fix command not working
+
+1. Ensure message starts with `fix:` (case insensitive)
+2. Check there's a recent entry in Inbox-Log.md to fix
+3. Verify capture script detected the fix command
+
+## Credits
+
+Based on the "Second Brain Build Guide" concept, adapted for:
+- iMessage (instead of Slack)
+- Obsidian (instead of Notion)
+- Claude Code (instead of Zapier)
