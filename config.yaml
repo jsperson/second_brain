@@ -18,12 +18,13 @@ paths:
   vault: "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/YOUR_VAULT"
 
   # Destination folders (relative to vault)
-  inbox: "Inbox"
-  projects: "Projects"
-  ideas: "Knowledge/Ideas"
-  people: "Knowledge/People"
-  tasks: "Tasks"
-  inbox_log: "Inbox-Log.md"
+  # All Second Brain folders live under a master folder
+  inbox: "Second Brain/Inbox"
+  projects: "Second Brain/Projects"
+  ideas: "Second Brain/Ideas"
+  people: "Second Brain/People"
+  tasks: "Second Brain/Admin"
+  inbox_log: "Second Brain/Inbox-Log.md"
 
   # State and logs directory
   state_dir: "~/.imessage-capture"
@@ -37,10 +38,10 @@ paths:
 # Maps classification categories to destination folders (relative to vault)
 # Override in config.local.yaml to use different folder names
 categories:
-  people: "People"              # Info about a person, relationship updates
-  projects: "Projects"          # Multi-step work, ongoing tasks
-  ideas: "Ideas"                # Thoughts, insights, concepts
-  admin: "Admin"                # Simple errands, one-off tasks with due dates
+  people: "Second Brain/People"       # Info about a person, relationship updates
+  projects: "Second Brain/Projects"   # Multi-step work, ongoing tasks
+  ideas: "Second Brain/Ideas"         # Thoughts, insights, concepts
+  admin: "Second Brain/Admin"         # Simple errands, one-off tasks with due dates
 
 # =============================================================================
 # Schedule Frequencies (in seconds)
