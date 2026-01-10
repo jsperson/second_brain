@@ -79,5 +79,5 @@ user:
 # Claude Code
 # =============================================================================
 claude:
-  # Path to claude executable
-  executable: "~/.claude/local/claude"
+  # Path to claude executable (find with: which claude)
+  executable: "~/.npm-global/bin/claude"

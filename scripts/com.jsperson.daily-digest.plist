@@ -7,13 +7,14 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/jsperson/.claude/local/claude</string>
+        <string>/Users/jsperson/.npm-global/bin/claude</string>
         <string>--print</string>
+        <string>--dangerously-skip-permissions</string>
         <string>/daily-digest</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/jsperson/source/second_brain</string>
+    <string>/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott</string>
 
     <!-- Run at 7:00 every day -->
     <key>StartCalendarInterval</key>
@@ -36,7 +37,7 @@
         <key>HOME</key>
         <string>/Users/jsperson</string>
         <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin:/Users/jsperson/.claude/local</string>
+        <string>/usr/local/bin:/usr/bin:/bin:/Users/jsperson/.npm-global/bin</string>
     </dict>
 </dict>
 </plist>

@@ -111,11 +111,12 @@ INBOX_PROCESSOR_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
     <array>
         <string>{claude_executable}</string>
         <string>--print</string>
+        <string>--dangerously-skip-permissions</string>
         <string>/process-inbox</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>{repo_dir}</string>
+    <string>{vault_path}</string>
 
     <!-- Run every {processor_interval} seconds -->
     <key>StartInterval</key>
@@ -154,11 +155,12 @@ DAILY_DIGEST_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
     <array>
         <string>{claude_executable}</string>
         <string>--print</string>
+        <string>--dangerously-skip-permissions</string>
         <string>/daily-digest</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>{repo_dir}</string>
+    <string>{vault_path}</string>
 
     <!-- Run at {digest_hour}:{digest_minute:02d} every day -->
     <key>StartCalendarInterval</key>
@@ -198,11 +200,12 @@ WEEKLY_REVIEW_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
     <array>
         <string>{claude_executable}</string>
         <string>--print</string>
+        <string>--dangerously-skip-permissions</string>
         <string>/weekly-review</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>{repo_dir}</string>
+    <string>{vault_path}</string>
 
     <!-- Run at {review_hour}:{review_minute:02d} on weekday {review_weekday} (0=Sunday) -->
     <key>StartCalendarInterval</key>
@@ -246,6 +249,7 @@ def main():
     repo_dir = script_dir.parent
     state_dir = expand_path(config['paths']['state_dir'])
     automator_app = expand_path(config['paths']['automator_app'])
+    vault_path = expand_path(config['paths']['vault'])
     claude_executable = expand_path(config['claude']['executable'])
     claude_dir = str(Path(claude_executable).parent)
     home = config['user']['home']
@@ -253,6 +257,7 @@ def main():
     # Common template values
     values = {
         'repo_dir': str(repo_dir),
+        'vault_path': vault_path,
         'state_dir': state_dir,
         'automator_app': automator_app,
         'claude_executable': claude_executable,

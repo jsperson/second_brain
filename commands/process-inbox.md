@@ -63,7 +63,13 @@ The `categories` section maps categories to destination folders:
    - Leave in Inbox
    - Update frontmatter with `needs_review: true`
 
-5. **Update frontmatter** of processed file:
+5. **Archive original file**:
+   - Create `Inbox/Processed/` folder if it doesn't exist
+   - Move the original capture file from `Inbox/` to `Inbox/Processed/`
+   - This keeps the Inbox clean while preserving the original for reference
+   - Skip this step for `needs_review` items (they stay in Inbox)
+
+6. **Update frontmatter** of processed file:
    ```yaml
    processed: true
    classified_as: {category}
@@ -71,7 +77,7 @@ The `categories` section maps categories to destination folders:
    classified_at: {ISO timestamp}
    ```
 
-6. **Append to Inbox-Log.md**:
+7. **Append to Inbox-Log.md**:
    - If log doesn't exist, create it with header
    - Add entry under today's date section
 
@@ -84,7 +90,7 @@ The `categories` section maps categories to destination folders:
    | HH:MM | First 50 chars... | category | relative/path | Filed |
    ```
 
-7. **Report summary** when done:
+8. **Report summary** when done:
    - Number of items processed
    - Number filed to each category
    - Any items left in needs_review
