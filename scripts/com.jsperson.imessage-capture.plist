@@ -11,7 +11,7 @@
         <string>/Users/jsperson/Applications/iMessageCapture.app</string>
     </array>
 
-    <!-- Run every 60 seconds (1 minute) -->
+    <!-- Run every 60 seconds -->
     <key>StartInterval</key>
     <integer>60</integer>
 

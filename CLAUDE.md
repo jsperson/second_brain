@@ -17,7 +17,7 @@ second_brain/
 ├── scripts/                 # Python scripts and launchd plists
 │   ├── imessage_capture.py  # Captures iMessages to Obsidian Inbox
 │   └── *.plist              # Launchd job definitions
-├── skills/                  # Claude Code skill definitions
+├── commands/                # Claude Code command definitions
 │   ├── process-inbox.md     # Classify and route inbox items
 │   ├── daily-digest.md      # Generate daily summary
 │   └── weekly-review.md     # Generate weekly review
@@ -104,9 +104,9 @@ classified_at: 2026-01-10T06:38:00+00:00
 Use YYYYMMDD format for dates in content (e.g., `20260110`).
 Use ISO 8601 for timestamps in frontmatter.
 
-## Skills
+## Commands
 
-The following skills are available:
+The following commands are available:
 
 - `/process-inbox` - Classify and route unprocessed captures
 - `/daily-digest` - Generate daily summary of tasks, projects, people

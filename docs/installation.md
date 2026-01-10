@@ -128,26 +128,23 @@ launchctl list | grep imessage-capture
 3. Check the Inbox folder for a new `.md` file
 4. Check logs if issues: `tail ~/.imessage-capture/launchd-error.log`
 
-## Part 3: Install Claude Code Skills
+## Part 3: Install Claude Code Commands
 
-### 3.1 Copy Skills to Claude Config
+### 3.1 Copy Commands to Claude Config
 
 ```bash
-# Create skills directory if needed
-mkdir -p ~/.claude/skills
-
-# Copy skills
-cp ~/source/second_brain/skills/*.md ~/.claude/skills/
+# Copy commands
+cp ~/source/second_brain/commands/*.md ~/.claude/commands/
 ```
 
-### 3.2 Verify Skills
+### 3.2 Verify Commands
 
 Open Claude Code and try:
 ```
 /process-inbox
 ```
 
-It should recognize the skill and show the instructions.
+It should recognize the command and show the instructions.
 
 ## Part 4: Inbox Processor Setup (Optional)
 
@@ -276,10 +273,10 @@ rm -rf ~/Applications/iMessageCapture.app
 # Remove state files (optional)
 rm -rf ~/.imessage-capture/
 
-# Remove skills (optional)
-rm ~/.claude/skills/process-inbox.md
-rm ~/.claude/skills/daily-digest.md
-rm ~/.claude/skills/weekly-review.md
+# Remove commands (optional)
+rm ~/.claude/commands/process-inbox.md
+rm ~/.claude/commands/daily-digest.md
+rm ~/.claude/commands/weekly-review.md
 ```
 
 ## Configuration Reference

@@ -1,28 +1,20 @@
-# Process Inbox Skill
+---
+description: "Classify and route unprocessed captures from Obsidian Inbox"
+auto_run: true
+---
 
 Process unprocessed captures from the Obsidian Inbox, classifying and routing them to appropriate destinations.
 
-## Trigger
-
-This skill is invoked by:
-- Manual command: `/process-inbox`
-- Scheduled launchd job: `claude "/process-inbox"`
-
 ## Configuration
 
-Configuration is in `config.yaml` (or `config.local.yaml` for personal overrides).
+Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get paths. The vault is at `paths.vault`.
 
 ### Category Mapping
-The `categories` section maps Nate B Jones' Second Brain categories to destination folders:
+The `categories` section maps categories to destination folders:
 - **people**: `{vault}/{categories.people}` - Info about a person
 - **projects**: `{vault}/{categories.projects}` - Multi-step work
 - **ideas**: `{vault}/{categories.ideas}` - Thoughts, concepts
 - **admin**: `{vault}/{categories.admin}` - Simple errands (alias: "tasks")
-
-### Paths
-- **vault**: `paths.vault` - Obsidian vault root
-- **Inbox**: `{vault}/{paths.inbox}/`
-- **Inbox Log**: `{vault}/{paths.inbox_log}`
 
 ## Instructions
 
@@ -45,8 +37,6 @@ The `categories` section maps Nate B Jones' Second Brain categories to destinati
    - Move that file to the new destination based on target_category
    - Update the log entry status to "Fixed"
    - Delete the fix command file after processing
-
-   **Note:** The `reply_to_guid` field is populated when the user replies to a specific iMessage with "fix: category". This enables fixing any previous capture, not just the most recent one.
 
 4. **Route to destination** based on classification:
 
@@ -111,25 +101,22 @@ The `categories` section maps Nate B Jones' Second Brain categories to destinati
 
 **Input:** "Project: finish the Q1 report by Friday"
 - Category: `projects`
-- Project name: "Q1 Report"
 - Destination: `Projects/Q1-Report/`
 
 **Input:** "What if we added dark mode to the app?"
 - Category: `ideas`
-- Title: "Dark mode for app"
 - Destination: `Knowledge/Ideas/Dark-mode-for-app.md`
 
 **Input:** "Sarah mentioned she's looking for a new job"
 - Category: `people`
-- Person: "Sarah"
 - Destination: `Knowledge/People/Sarah.md`
 
 **Input:** "Renew car registration by Jan 15"
 - Category: `admin`
-- Task: "Renew car registration"
-- Due date: 2026-01-15
-- Destination: `Tasks/Renew-car-registration.md` (via `categories.admin`)
+- Destination: `Tasks/Renew-car-registration.md`
 
 **Input:** "remember the thing"
 - Category: `needs_review`
 - Stays in Inbox with `needs_review: true`
+
+$ARGUMENTS

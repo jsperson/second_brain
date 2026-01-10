@@ -15,7 +15,7 @@
     <key>WorkingDirectory</key>
     <string>/Users/jsperson/source/second_brain</string>
 
-    <!-- Run at 4:00 PM every Sunday (Weekday 0 = Sunday) -->
+    <!-- Run at 16:00 on weekday 0 (0=Sunday) -->
     <key>StartCalendarInterval</key>
     <dict>
         <key>Weekday</key>

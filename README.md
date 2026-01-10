@@ -41,7 +41,7 @@ This system implements the "Second Brain" workflow:
 - **imessage_capture.py** - Monitors Messages database, writes captures to Obsidian Inbox
 - **Launchd plists** - Schedule automation jobs
 
-### Claude Code Skills
+### Claude Code Commands
 
 - **/process-inbox** - Classify and route unprocessed captures
 - **/daily-digest** - Generate daily summary (tasks, projects, people)
@@ -89,7 +89,7 @@ The capture will be reclassified and moved to the correct destination.
 
 ### Manual Commands
 
-Run skills directly in Claude Code:
+Run commands directly in Claude Code:
 ```
 /process-inbox    # Process pending captures now
 /daily-digest     # Generate daily summary now
@@ -108,7 +108,7 @@ second_brain/
 │   ├── com.jsperson.inbox-processor.plist
 │   ├── com.jsperson.daily-digest.plist
 │   └── com.jsperson.weekly-review.plist
-├── skills/
+├── commands/
 │   ├── process-inbox.md
 │   ├── daily-digest.md
 │   └── weekly-review.md
@@ -133,7 +133,7 @@ scott/
 ## Dependencies
 
 - **macOS** - Uses Messages.app database and launchd
-- **Claude Code** - For classification and skills
+- **Claude Code** - For classification and commands
 - **Obsidian** - Note storage (iCloud synced)
 - **Automator** - App wrapper for Full Disk Access
 
