@@ -116,7 +116,11 @@ def save_last_processed(apple_ts):
 
 
 def fetch_new_messages(since_ts=None):
-    """Fetch messages to self newer than the given timestamp."""
+    """Fetch messages to self newer than the given timestamp.
+
+    Returns tuples of (rowid, date, text, is_from_me, guid, reply_to_guid).
+    The guid is used to identify messages for reply-based fix targeting.
+    """
     conn = sqlite3.connect(CHAT_DB)
     cursor = conn.cursor()
 
@@ -124,7 +128,7 @@ def fetch_new_messages(since_ts=None):
 
     if since_ts:
         query = f"""
-            SELECT m.ROWID, m.date, m.text, m.is_from_me
+            SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.reply_to_guid
             FROM message m
             JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
             JOIN chat c ON cmj.chat_id = c.ROWID
@@ -141,7 +145,7 @@ def fetch_new_messages(since_ts=None):
             datetime.now(tz=timezone.utc).replace(microsecond=0)
         ) - (3600 * 1_000_000_000)
         query = f"""
-            SELECT m.ROWID, m.date, m.text, m.is_from_me
+            SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.reply_to_guid
             FROM message m
             JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
             JOIN chat c ON cmj.chat_id = c.ROWID
@@ -199,8 +203,14 @@ def parse_fix_command(text):
     return True, None
 
 
-def write_capture(apple_ts, text):
-    """Write a single capture to the inbox as a markdown file."""
+def write_capture(apple_ts, text, guid):
+    """Write a single capture to the inbox as a markdown file.
+
+    Args:
+        apple_ts: Apple nanosecond timestamp
+        text: Message text content
+        guid: iMessage GUID for reply-based fix targeting
+    """
     dt = apple_timestamp_to_datetime(apple_ts)
 
     # Create filename: timestamp + snippet
@@ -213,6 +223,7 @@ def write_capture(apple_ts, text):
     content = f"""---
 captured: {iso_timestamp}
 source: imessage
+imessage_guid: {guid}
 type: capture
 processed: false
 ---
@@ -225,12 +236,19 @@ processed: false
     print(f"Created: {filename}")
 
 
-def write_fix_command(apple_ts, text, target_category):
+def write_fix_command(apple_ts, text, target_category, reply_to_guid=None):
     """
     Write a fix command file that the processor will handle.
 
+    Args:
+        apple_ts: Apple nanosecond timestamp
+        text: Message text content
+        target_category: The category to reclassify to
+        reply_to_guid: If this is a reply to a specific message, its GUID.
+                       Used for targeted fixes instead of most-recent.
+
     The processor will:
-    1. Find the most recent classified item
+    1. Find the target item (by reply_to_guid if present, else most recent)
     2. Reclassify it with the target category
     3. Move it to the new destination
     4. Update Inbox-Log.md
@@ -242,6 +260,9 @@ def write_fix_command(apple_ts, text, target_category):
 
     iso_timestamp = dt.isoformat()
 
+    # Build reply_to_guid line if present
+    reply_line = f"reply_to_guid: {reply_to_guid}\n" if reply_to_guid else ""
+
     # If category was recognized
     if target_category:
         content = f"""---
@@ -249,12 +270,15 @@ captured: {iso_timestamp}
 source: imessage
 type: fix_command
 target_category: {target_category}
-processed: false
+{reply_line}processed: false
 ---
 
 {text}
 """
-        print(f"Created fix command: {filename} (target: {target_category})")
+        target_info = f"target: {target_category}"
+        if reply_to_guid:
+            target_info += f", reply to: {reply_to_guid[:8]}..."
+        print(f"Created fix command: {filename} ({target_info})")
     else:
         # Category not recognized - create as needs_review
         content = f"""---
@@ -262,7 +286,7 @@ captured: {iso_timestamp}
 source: imessage
 type: fix_command
 target_category: unknown
-processed: false
+{reply_line}processed: false
 ---
 
 {text}
@@ -287,7 +311,7 @@ def main():
     # Get last processed timestamp
     last_ts = get_last_processed()
 
-    # Fetch new messages
+    # Fetch new messages (now includes guid and reply_to_guid)
     messages = fetch_new_messages(last_ts)
 
     if not messages:
@@ -297,14 +321,16 @@ def main():
     print(f"Processing {len(messages)} new message(s)...")
 
     newest_ts = last_ts
-    for rowid, apple_ts, text, is_from_me in messages:
+    for rowid, apple_ts, text, is_from_me, guid, reply_to_guid in messages:
         # Check if this is a fix command
         is_fix, target_category = parse_fix_command(text)
 
         if is_fix:
-            write_fix_command(apple_ts, text, target_category)
+            # Pass reply_to_guid for targeted fix (may be None for non-reply)
+            write_fix_command(apple_ts, text, target_category, reply_to_guid)
         else:
-            write_capture(apple_ts, text)
+            # Pass guid so captures can be targeted by reply-based fixes
+            write_capture(apple_ts, text, guid)
 
         if newest_ts is None or apple_ts > newest_ts:
             newest_ts = apple_ts

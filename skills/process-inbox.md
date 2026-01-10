@@ -36,10 +36,14 @@ Read the config file to get the actual paths:
 
 3. **Handle fix commands** (files with `type: fix_command` in frontmatter):
    - Read the `target_category` from frontmatter
-   - Find the most recent entry in `Inbox-Log.md`
+   - **Find target capture** using one of two methods:
+     - If `reply_to_guid` is present: Search Inbox and destination folders for a file with matching `imessage_guid` in frontmatter
+     - If `reply_to_guid` is absent: Use the most recent entry in `Inbox-Log.md` (fallback)
    - Move that file to the new destination based on target_category
    - Update the log entry status to "Fixed"
    - Delete the fix command file after processing
+
+   **Note:** The `reply_to_guid` field is populated when the user replies to a specific iMessage with "fix: category". This enables fixing any previous capture, not just the most recent one.
 
 4. **Route to destination** based on classification:
 

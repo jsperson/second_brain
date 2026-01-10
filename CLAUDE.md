@@ -74,16 +74,20 @@ When classifying captures, use these categories:
 ---
 captured: 2026-01-10T06:33:00+00:00
 source: imessage
+imessage_guid: 4414CCC3-0A91-465F-A529-41620B9363CD
 type: capture
 processed: false
 ---
 ```
+
+The `imessage_guid` field stores the unique iMessage identifier, enabling reply-based fix targeting.
 
 ### Processed capture (after classification):
 ```yaml
 ---
 captured: 2026-01-10T06:33:00+00:00
 source: imessage
+imessage_guid: 4414CCC3-0A91-465F-A529-41620B9363CD
 type: capture
 processed: true
 classified_as: projects
@@ -107,7 +111,14 @@ The following skills are available:
 
 ## Fix Mechanism
 
-Users can correct misclassifications by sending "fix: category" via iMessage:
+Users can correct misclassifications by sending "fix: category" via iMessage.
+
+**Targeted fix (recommended):** Reply to the specific message you want to fix:
+- Long-press or swipe on the message in iMessage
+- Reply with `fix: tasks` (or another category)
+- The system uses the `reply_to_guid` to find the matching capture by `imessage_guid`
+
+**Fallback fix:** Send as a new message (fixes most recent):
 - `fix: people` - Reclassify most recent item as people
 - `fix: projects` - Reclassify as projects
 - `fix: ideas` - Reclassify as ideas

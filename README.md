@@ -73,12 +73,19 @@ The system will:
 
 ### Correct a Mistake
 
-If the AI misclassifies, send another iMessage:
+If the AI misclassifies, you can fix it via iMessage:
+
+**Option 1: Reply to the message (recommended)**
+- Long-press or swipe on the misclassified message in iMessage
+- Reply with `fix: tasks` (or the correct category)
+- This targets that specific capture, even if it's not the most recent
+
+**Option 2: Send a new message (fixes most recent)**
 ```
 fix: should be tasks
 ```
 
-The most recent capture will be reclassified and moved.
+The capture will be reclassified and moved to the correct destination.
 
 ### Manual Commands
 
@@ -195,8 +202,9 @@ user:
 ### Fix command not working
 
 1. Ensure message starts with `fix:` (case insensitive)
-2. Check there's a recent entry in Inbox-Log.md to fix
-3. Verify capture script detected the fix command
+2. For reply-based fixes: verify the original message was captured (has `imessage_guid` in frontmatter)
+3. For fallback fixes: check there's a recent entry in Inbox-Log.md to fix
+4. Verify capture script detected the fix command (check logs)
 
 ## Credits
 
