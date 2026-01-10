@@ -65,25 +65,19 @@ Create these folders in your Obsidian vault if they don't exist:
 # Set VAULT to match your paths.vault from config.local.yaml
 VAULT="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/YOUR_VAULT"
 
-mkdir -p "$VAULT/Inbox"
-mkdir -p "$VAULT/Tasks"
-mkdir -p "$VAULT/Knowledge/Ideas"
-mkdir -p "$VAULT/Knowledge/People"
+mkdir -p "$VAULT/Second Brain/Inbox/Processed"
+mkdir -p "$VAULT/Second Brain/Projects"
+mkdir -p "$VAULT/Second Brain/People"
+mkdir -p "$VAULT/Second Brain/Ideas"
+mkdir -p "$VAULT/Second Brain/Admin"
 ```
 
-### 1.2 Create Inbox Log
+### 1.2 Create Inbox Log (Optional)
 
-Create the classification log file:
+The processor will create this automatically, but you can create it manually:
 
 ```bash
-cat > "$VAULT/Inbox-Log.md" << 'EOF'
-# Inbox Log
-
-Classification audit trail for Second Brain captures.
-
----
-
-EOF
+touch "$VAULT/Second Brain/Inbox-Log.md"
 ```
 
 ## Part 2: iMessage Capture Setup
@@ -96,9 +90,9 @@ The capture script needs Full Disk Access to read Messages database. We use an A
 2. Create a new **Application**
 3. Add a **Run Shell Script** action
 4. Set shell to `/bin/bash`
-5. Paste this script:
+5. Paste this script (replace YOUR_USERNAME with your macOS username):
    ```bash
-   /usr/bin/python3 /Users/jsperson/source/second_brain/scripts/imessage_capture.py
+   /usr/bin/python3 /Users/YOUR_USERNAME/source/second_brain/scripts/imessage_capture.py
    ```
 6. Save as `iMessageCapture.app` to `~/Applications/`
 
@@ -205,9 +199,9 @@ launchctl unload ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist
 ### 6.2 Update Automator App
 
 1. Open `~/Applications/iMessageCapture.app` in Automator
-2. Update the script path to:
+2. Update the script path to (replace YOUR_USERNAME):
    ```bash
-   /usr/bin/python3 /Users/jsperson/source/second_brain/scripts/imessage_capture.py
+   /usr/bin/python3 /Users/YOUR_USERNAME/source/second_brain/scripts/imessage_capture.py
    ```
 3. Save
 
@@ -281,23 +275,49 @@ rm ~/.claude/commands/weekly-review.md
 
 ## Configuration Reference
 
+All configuration is done in `config.yaml` (defaults) or `config.local.yaml` (your overrides).
+
 ### iMessage Handles
 
-Edit `scripts/imessage_capture.py` to change monitored handles:
+Edit `config.local.yaml`:
 
-```python
-SELF_HANDLES = ["+17038673475", "jsperson@gmail.com"]
+```yaml
+handles:
+  - "+15551234567"
+  - "your.email@icloud.com"
 ```
 
 ### Schedule Intervals
 
-Edit the plist files to change timing:
+Edit `config.local.yaml` and regenerate plists:
 
-- **Capture**: `StartInterval` in seconds (default: 60)
-- **Processor**: `StartInterval` in seconds (default: 300)
-- **Daily Digest**: `StartCalendarInterval` Hour/Minute
-- **Weekly Review**: `StartCalendarInterval` Weekday/Hour/Minute
+```yaml
+frequencies:
+  capture_interval: 60      # seconds between iMessage checks
+  processor_interval: 300   # seconds between classifications
 
-### Obsidian Paths
+schedule:
+  daily_digest:
+    hour: 7
+    minute: 0
+  weekly_review:
+    weekday: 0    # 0=Sunday
+    hour: 16
+    minute: 0
+```
 
-Edit `CLAUDE.md` and skill files if your vault is in a different location.
+Then regenerate and reinstall:
+```bash
+python3 scripts/generate_plists.py
+cp scripts/*.plist ~/Library/LaunchAgents/
+# Reload any running jobs
+```
+
+### Claude Executable Path
+
+If `which claude` returns a different path than `~/.npm-global/bin/claude`, add to `config.local.yaml`:
+
+```yaml
+claude:
+  executable: "/path/to/your/claude"
+```

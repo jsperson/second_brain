@@ -54,20 +54,20 @@ These are the original categories from Nate B Jones' Second Brain Build Guide:
 
 | Category | Default Folder | Description |
 |----------|----------------|-------------|
-| `people` | `Knowledge/People/` | Info about a person, relationship updates |
-| `projects` | `Projects/` | Multi-step work, ongoing tasks |
-| `ideas` | `Knowledge/Ideas/` | Thoughts, insights, concepts |
-| `admin` | `Tasks/` | Simple errands, one-off items (alias: "tasks") |
-| `needs_review` | `Inbox/` (stays) | Unclear classification, low confidence |
+| `people` | `Second Brain/People/` | Info about a person, relationship updates |
+| `projects` | `Second Brain/Projects/` | Multi-step work, ongoing tasks |
+| `ideas` | `Second Brain/Ideas/` | Thoughts, insights, concepts |
+| `admin` | `Second Brain/Admin/` | Simple errands, one-off items (alias: "tasks") |
+| `needs_review` | `Second Brain/Inbox/` (stays) | Unclear classification, low confidence |
 
-To customize where categories are routed, edit the `categories` section in `config.yaml`:
+To customize where categories are routed, edit `config.local.yaml`:
 
 ```yaml
 categories:
-  people: "Knowledge/People"
-  projects: "Projects"
-  ideas: "Knowledge/Ideas"
-  admin: "Tasks"
+  people: "My Custom/People"
+  projects: "My Custom/Projects"
+  ideas: "My Custom/Ideas"
+  admin: "My Custom/Tasks"
 ```
 
 ## Frontmatter Conventions
@@ -94,7 +94,7 @@ imessage_guid: 4414CCC3-0A91-465F-A529-41620B9363CD
 type: capture
 processed: true
 classified_as: projects
-destination: Projects/Q1-Report/
+destination: Second Brain/Projects/Q1-Report/
 classified_at: 2026-01-10T06:38:00+00:00
 ---
 ```

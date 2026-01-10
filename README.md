@@ -28,11 +28,11 @@ This system implements the "Second Brain" workflow:
 
 | Category | Destination | Description |
 |----------|-------------|-------------|
-| Projects | `Projects/{Name}/` | Multi-step work, ongoing tasks |
-| Ideas | `Knowledge/Ideas/` | Thoughts, concepts to explore |
-| People | `Knowledge/People/` | Contact info, relationship notes |
-| Tasks | `Tasks/` | Simple errands, items with due dates |
-| Unclear | `Inbox/` (stays) | Low confidence, needs human review |
+| Projects | `Second Brain/Projects/` | Multi-step work, ongoing tasks |
+| Ideas | `Second Brain/Ideas/` | Thoughts, concepts to explore |
+| People | `Second Brain/People/` | Contact info, relationship notes |
+| Admin | `Second Brain/Admin/` | Simple errands, items with due dates |
+| Unclear | `Second Brain/Inbox/` (stays) | Low confidence, needs human review |
 
 ## Components
 
@@ -119,15 +119,15 @@ second_brain/
 ## Obsidian Vault Structure
 
 ```
-scott/
-├── Inbox/                  # Captures land here
-├── Inbox-Log.md           # Classification audit log
-├── Projects/              # Active projects
-├── Knowledge/
-│   ├── Ideas/             # Ideas and concepts
-│   └── People/            # Contact notes
-├── Tasks/                 # Actionable items
-└── ...
+YourVault/
+└── Second Brain/
+    ├── Inbox/              # Captures land here
+    │   └── Processed/      # Archived after classification
+    ├── Inbox-Log.md        # Classification audit log
+    ├── Projects/           # Multi-step work
+    ├── People/             # Contact notes
+    ├── Ideas/              # Thoughts and concepts
+    └── Admin/              # Simple tasks and errands
 ```
 
 ## Dependencies

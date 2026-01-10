@@ -80,5 +80,7 @@ user:
 # Claude Code
 # =============================================================================
 claude:
-  # Path to claude executable (find with: which claude)
-  executable: "~/.npm-global/bin/claude"
+  # Path to claude executable
+  # Find yours with: which claude
+  # Common paths: ~/.npm-global/bin/claude, /usr/local/bin/claude
+  executable: "/usr/local/bin/claude"
