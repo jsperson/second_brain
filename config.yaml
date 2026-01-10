@@ -35,12 +35,12 @@ paths:
 # Category Mapping (Nate B Jones' Second Brain categories)
 # =============================================================================
 # Maps classification categories to destination folders (relative to vault)
-# These are the original categories from the Second Brain Build Guide
+# Override in config.local.yaml to use different folder names
 categories:
-  people: "Knowledge/People"    # Info about a person, relationship updates
+  people: "People"              # Info about a person, relationship updates
   projects: "Projects"          # Multi-step work, ongoing tasks
-  ideas: "Knowledge/Ideas"      # Thoughts, insights, concepts
-  admin: "Tasks"                # Simple errands, one-off tasks with due dates
+  ideas: "Ideas"                # Thoughts, insights, concepts
+  admin: "Admin"                # Simple errands, one-off tasks with due dates
 
 # =============================================================================
 # Schedule Frequencies (in seconds)
