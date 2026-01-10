@@ -177,6 +177,49 @@ user:
   home: "/Users/yourusername"
 ```
 
+### Customizing Folder Structure
+
+By default, all folders live under `Second Brain/` in your vault. To use a different structure, override the paths in `config.local.yaml`.
+
+**Change the master folder:**
+
+```yaml
+paths:
+  inbox: "My PKM/Inbox"
+  inbox_log: "My PKM/Inbox-Log.md"
+
+categories:
+  people: "My PKM/People"
+  projects: "My PKM/Projects"
+  ideas: "My PKM/Ideas"
+  admin: "My PKM/Tasks"
+```
+
+**Use existing Obsidian folders:**
+
+```yaml
+categories:
+  people: "Contacts"
+  projects: "Work/Projects"
+  ideas: "Notes/Ideas"
+  admin: "Tasks"
+```
+
+**Map to PARA method folders:**
+
+```yaml
+categories:
+  projects: "1 - Projects"
+  ideas: "3 - Resources/Ideas"
+  people: "3 - Resources/People"
+  admin: "2 - Areas/Tasks"
+```
+
+After changing folder paths:
+1. Create the folders in your vault if they don't exist
+2. Run `python3 scripts/generate_plists.py` to regenerate plists
+3. Reload the capture job: `launchctl unload ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist && launchctl load ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist`
+
 ## Troubleshooting
 
 ### Captures not appearing
@@ -208,7 +251,9 @@ user:
 
 ## Credits
 
-Based on the "Second Brain Build Guide" concept, adapted for:
+Based on the [Second Brain Build Guide](https://natesnewsletter.substack.com/p/bridge-the-ai-implementation-gap) by [Nate B. Jones](https://natesnewsletter.substack.com/).
+
+Adapted for a local-first approach:
 - iMessage (instead of Slack)
 - Obsidian (instead of Notion)
-- Claude Code (instead of Zapier)
+- Claude Code (instead of Zapier + Claude API)
