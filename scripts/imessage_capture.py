@@ -177,8 +177,12 @@ def parse_fix_command(text):
     """
     Check if text is a fix command and extract the target category.
 
-    Returns tuple (is_fix, target_category) where target_category is one of:
-    'people', 'projects', 'ideas', 'tasks', or None if not recognized.
+    Returns tuple (is_fix, target_category) where target_category is one of
+    the configured categories (people, projects, ideas, admin) or None if
+    not recognized.
+
+    Uses category names from config.yaml. The 'tasks' keyword is an alias
+    for 'admin' (the original Second Brain category name).
     """
     match = FIX_PATTERN.match(text.strip())
     if not match:
@@ -186,18 +190,24 @@ def parse_fix_command(text):
 
     correction = match.group(1).lower().strip()
 
+    # Get valid categories from config
+    valid_categories = list(CONFIG.get('categories', {}).keys())
+
     # Map various phrasings to categories
+    # Keys are the canonical category names from config
     category_keywords = {
         'people': ['people', 'person', 'contact'],
         'projects': ['projects', 'project'],
         'ideas': ['ideas', 'idea'],
-        'tasks': ['tasks', 'task', 'admin', 'todo', 'errand'],
+        'admin': ['admin', 'tasks', 'task', 'todo', 'errand'],  # 'tasks' is alias for 'admin'
     }
 
     for category, keywords in category_keywords.items():
-        for keyword in keywords:
-            if keyword in correction:
-                return True, category
+        # Only use categories that are in the config
+        if category in valid_categories:
+            for keyword in keywords:
+                if keyword in correction:
+                    return True, category
 
     # Fix command recognized but category unclear
     return True, None

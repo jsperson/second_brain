@@ -8,17 +8,20 @@ This skill is invoked by:
 - Manual command: `/process-inbox`
 - Scheduled launchd job: `claude "/process-inbox"`
 
-## Paths
+## Configuration
 
-Paths are configured in `config.yaml` (or `config.local.yaml` for personal overrides).
+Configuration is in `config.yaml` (or `config.local.yaml` for personal overrides).
 
-Read the config file to get the actual paths:
+### Category Mapping
+The `categories` section maps Nate B Jones' Second Brain categories to destination folders:
+- **people**: `{vault}/{categories.people}` - Info about a person
+- **projects**: `{vault}/{categories.projects}` - Multi-step work
+- **ideas**: `{vault}/{categories.ideas}` - Thoughts, concepts
+- **admin**: `{vault}/{categories.admin}` - Simple errands (alias: "tasks")
+
+### Paths
 - **vault**: `paths.vault` - Obsidian vault root
 - **Inbox**: `{vault}/{paths.inbox}/`
-- **Projects**: `{vault}/{paths.projects}/`
-- **Ideas**: `{vault}/{paths.ideas}/`
-- **People**: `{vault}/{paths.people}/`
-- **Tasks**: `{vault}/{paths.tasks}/`
 - **Inbox Log**: `{vault}/{paths.inbox_log}`
 
 ## Instructions
@@ -27,11 +30,11 @@ Read the config file to get the actual paths:
 
 2. **For each unprocessed file**, read the content and classify it:
 
-   **Categories:**
+   **Categories** (from Nate B Jones' Second Brain guide):
+   - `people` - Information about a person, relationship updates, follow-ups
    - `projects` - Multi-step work, ongoing tasks, things with next actions
    - `ideas` - Thoughts, insights, concepts to explore later
-   - `people` - Information about a person, relationship updates, follow-ups
-   - `tasks` - Simple errands, one-off items, things with due dates
+   - `admin` - Simple errands, one-off items, things with due dates (alias: "tasks")
    - `needs_review` - Unclear, could be multiple categories
 
 3. **Handle fix commands** (files with `type: fix_command` in frontmatter):
@@ -62,9 +65,9 @@ Read the config file to get the actual paths:
    - Move to `Knowledge/People/{PersonName}.md`
    - If file exists, append to it instead of overwriting
 
-   **For tasks:**
+   **For admin (or tasks):**
    - Extract task name and due date if present
-   - Move to `Tasks/{task-name}.md`
+   - Move to `{categories.admin}/{task-name}.md` (default: `Tasks/`)
 
    **For needs_review:**
    - Leave in Inbox
@@ -122,10 +125,10 @@ Read the config file to get the actual paths:
 - Destination: `Knowledge/People/Sarah.md`
 
 **Input:** "Renew car registration by Jan 15"
-- Category: `tasks`
+- Category: `admin`
 - Task: "Renew car registration"
 - Due date: 2026-01-15
-- Destination: `Tasks/Renew-car-registration.md`
+- Destination: `Tasks/Renew-car-registration.md` (via `categories.admin`)
 
 **Input:** "remember the thing"
 - Category: `needs_review`

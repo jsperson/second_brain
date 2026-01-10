@@ -32,6 +32,17 @@ paths:
   automator_app: "~/Applications/iMessageCapture.app"
 
 # =============================================================================
+# Category Mapping (Nate B Jones' Second Brain categories)
+# =============================================================================
+# Maps classification categories to destination folders (relative to vault)
+# These are the original categories from the Second Brain Build Guide
+categories:
+  people: "Knowledge/People"    # Info about a person, relationship updates
+  projects: "Projects"          # Multi-step work, ongoing tasks
+  ideas: "Knowledge/Ideas"      # Thoughts, insights, concepts
+  admin: "Tasks"                # Simple errands, one-off tasks with due dates
+
+# =============================================================================
 # Schedule Frequencies (in seconds)
 # =============================================================================
 frequencies:

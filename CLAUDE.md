@@ -49,23 +49,26 @@ Paths are defined in `config.yaml` under the `paths` section:
 
 ## Classification Categories
 
-When classifying captures, use these categories:
+Categories are mapped to destination folders in `config.yaml` under the `categories` section.
+These are the original categories from Nate B Jones' Second Brain Build Guide:
 
-- **projects**: Multi-step work, ongoing tasks, things with next actions
-  - Route to: `Projects/{ProjectName}/`
-  - Create new project folders as needed
+| Category | Default Folder | Description |
+|----------|----------------|-------------|
+| `people` | `Knowledge/People/` | Info about a person, relationship updates |
+| `projects` | `Projects/` | Multi-step work, ongoing tasks |
+| `ideas` | `Knowledge/Ideas/` | Thoughts, insights, concepts |
+| `admin` | `Tasks/` | Simple errands, one-off items (alias: "tasks") |
+| `needs_review` | `Inbox/` (stays) | Unclear classification, low confidence |
 
-- **ideas**: Thoughts, insights, concepts to explore later
-  - Route to: `Knowledge/Ideas/{title}.md`
+To customize where categories are routed, edit the `categories` section in `config.yaml`:
 
-- **people**: Information about a person, relationship updates, follow-ups
-  - Route to: `Knowledge/People/{PersonName}.md`
-
-- **tasks**: Simple errands, one-off items, things with due dates
-  - Route to: `Tasks/{task-name}.md`
-
-- **needs_review**: Unclear classification, low confidence
-  - Leave in: `Inbox/` with `needs_review: true` in frontmatter
+```yaml
+categories:
+  people: "Knowledge/People"
+  projects: "Projects"
+  ideas: "Knowledge/Ideas"
+  admin: "Tasks"
+```
 
 ## Frontmatter Conventions
 
@@ -122,7 +125,7 @@ Users can correct misclassifications by sending "fix: category" via iMessage.
 - `fix: people` - Reclassify most recent item as people
 - `fix: projects` - Reclassify as projects
 - `fix: ideas` - Reclassify as ideas
-- `fix: tasks` - Reclassify as tasks
+- `fix: admin` or `fix: tasks` - Reclassify as admin (both work)
 
 ## Development Notes
 
