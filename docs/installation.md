@@ -8,6 +8,52 @@ This guide walks through setting up the Second Brain system on a fresh Mac or mi
 - **Claude Code** installed and authenticated
 - **Obsidian** with iCloud sync enabled
 - **Messages.app** signed in with your Apple ID
+- **Python 3** with PyYAML (`pip3 install pyyaml`)
+
+## Part 0: Configuration
+
+Before installing, create your local configuration file.
+
+### 0.1 Create config.local.yaml
+
+```bash
+cd ~/source/second_brain
+cp config.yaml config.local.yaml
+```
+
+### 0.2 Edit config.local.yaml
+
+Update these values with your personal settings:
+
+```yaml
+# Your iMessage handles
+handles:
+  - "+15551234567"           # Your phone number
+  - "your.email@icloud.com"  # Your Apple ID email
+
+# Your Obsidian vault path
+paths:
+  vault: "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/YOUR_VAULT"
+
+# Your macOS username
+user:
+  username: "yourusername"
+  home: "/Users/yourusername"
+```
+
+You can also customize:
+- `frequencies.capture_interval` - How often to check for messages (seconds)
+- `frequencies.processor_interval` - How often to classify (seconds)
+- `schedule.daily_digest.hour/minute` - Daily digest time
+- `schedule.weekly_review.*` - Weekly review time
+
+### 0.3 Generate Plists
+
+After editing config.local.yaml, regenerate the launchd plists:
+
+```bash
+python3 scripts/generate_plists.py
+```
 
 ## Part 1: Obsidian Vault Setup
 
@@ -16,7 +62,8 @@ This guide walks through setting up the Second Brain system on a fresh Mac or mi
 Create these folders in your Obsidian vault if they don't exist:
 
 ```bash
-VAULT="/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott"
+# Set VAULT to match your paths.vault from config.local.yaml
+VAULT="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents/YOUR_VAULT"
 
 mkdir -p "$VAULT/Inbox"
 mkdir -p "$VAULT/Tasks"

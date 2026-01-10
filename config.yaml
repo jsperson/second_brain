@@ -1,0 +1,72 @@
+# Second Brain Configuration
+# Edit this file to customize your setup
+
+# =============================================================================
+# iMessage Handles
+# =============================================================================
+# Phone numbers and email addresses to monitor for self-messages
+# Replace with your own phone number and Apple ID email
+handles:
+  - "+1XXXXXXXXXX"           # Your phone number
+  - "your.email@example.com"  # Your Apple ID email
+
+# =============================================================================
+# Paths
+# =============================================================================
+paths:
+  # Obsidian vault root - update this to your vault location
+  vault: "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/YOUR_VAULT"
+
+  # Destination folders (relative to vault)
+  inbox: "Inbox"
+  projects: "Projects"
+  ideas: "Knowledge/Ideas"
+  people: "Knowledge/People"
+  tasks: "Tasks"
+  inbox_log: "Inbox-Log.md"
+
+  # State and logs directory
+  state_dir: "~/.imessage-capture"
+
+  # Automator app location
+  automator_app: "~/Applications/iMessageCapture.app"
+
+# =============================================================================
+# Schedule Frequencies (in seconds)
+# =============================================================================
+frequencies:
+  # How often to check for new iMessages
+  capture_interval: 60        # 1 minute
+
+  # How often to run inbox classification
+  processor_interval: 300     # 5 minutes
+
+# =============================================================================
+# Scheduled Times
+# =============================================================================
+schedule:
+  # Daily digest generation
+  daily_digest:
+    hour: 7
+    minute: 0
+
+  # Weekly review generation (0=Sunday, 1=Monday, ..., 6=Saturday)
+  weekly_review:
+    weekday: 0    # Sunday
+    hour: 16      # 4 PM
+    minute: 0
+
+# =============================================================================
+# User Info (for launchd plists)
+# =============================================================================
+# Update these with your macOS username
+user:
+  username: "YOUR_USERNAME"
+  home: "/Users/YOUR_USERNAME"
+
+# =============================================================================
+# Claude Code
+# =============================================================================
+claude:
+  # Path to claude executable
+  executable: "~/.claude/local/claude"

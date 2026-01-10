@@ -10,10 +10,14 @@ This skill is invoked by:
 
 ## Paths
 
-- **Tasks**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Tasks/`
-- **Projects**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Projects/`
-- **People**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Knowledge/People/`
-- **Output**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Inbox/`
+Paths are configured in `config.yaml` (or `config.local.yaml` for personal overrides).
+
+Read the config file to get the actual paths:
+- **vault**: `paths.vault` - Obsidian vault root
+- **Tasks**: `{vault}/{paths.tasks}/`
+- **Projects**: `{vault}/{paths.projects}/`
+- **People**: `{vault}/{paths.people}/`
+- **Output**: `{vault}/{paths.inbox}/` (digests go to Inbox)
 
 ## Instructions
 

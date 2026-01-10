@@ -136,17 +136,38 @@ See [docs/installation.md](docs/installation.md) for detailed setup instructions
 
 ## Configuration
 
-### Monitored iMessage Handles
+All settings are in `config.yaml`, with personal overrides in `config.local.yaml` (gitignored).
 
-The capture script monitors messages to these handles (edit in `imessage_capture.py`):
-- `+17038673475` (phone number)
-- `jsperson@gmail.com` (Apple ID)
+### Setup
 
-### Obsidian Paths
+1. Copy values you need to override into `config.local.yaml`
+2. Edit `config.local.yaml` with your personal settings
+3. Run `python3 scripts/generate_plists.py` to regenerate launchd plists
 
-Default paths assume vault at:
-```
-/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/
+### Configurable Settings
+
+| Setting | Config Key | Description |
+|---------|------------|-------------|
+| **Handles** | `handles` | Phone numbers and emails to monitor |
+| **Vault Path** | `paths.vault` | Your Obsidian vault location |
+| **Capture Interval** | `frequencies.capture_interval` | Seconds between iMessage checks |
+| **Processor Interval** | `frequencies.processor_interval` | Seconds between classifications |
+| **Daily Digest Time** | `schedule.daily_digest.hour/minute` | When to generate daily digest |
+| **Weekly Review Time** | `schedule.weekly_review.*` | When to generate weekly review |
+
+### Example config.local.yaml
+
+```yaml
+handles:
+  - "+15551234567"
+  - "your.email@icloud.com"
+
+paths:
+  vault: "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/MyVault"
+
+user:
+  username: "yourusername"
+  home: "/Users/yourusername"
 ```
 
 ## Troubleshooting

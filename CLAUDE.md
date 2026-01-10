@@ -24,19 +24,28 @@ second_brain/
 └── docs/                    # Documentation
 ```
 
+## Configuration
+
+All paths, handles, and schedules are configured in:
+- `config.yaml` - Base configuration (committed, with placeholder values)
+- `config.local.yaml` - Personal overrides (gitignored, with actual values)
+
+The scripts load both files, with local overrides taking precedence.
+
 ## Key Paths
 
-| Component | Path |
-|-----------|------|
-| Obsidian Vault | `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/` |
-| Inbox | `{vault}/Inbox/` |
-| Projects | `{vault}/Projects/` |
-| Ideas | `{vault}/Knowledge/Ideas/` |
-| People | `{vault}/Knowledge/People/` |
-| Tasks | `{vault}/Tasks/` |
-| Inbox Log | `{vault}/Inbox-Log.md` |
-| State File | `~/.imessage-capture/last_processed` |
-| Logs | `~/.imessage-capture/*.log` |
+Paths are defined in `config.yaml` under the `paths` section:
+
+| Config Key | Purpose |
+|------------|---------|
+| `paths.vault` | Obsidian vault root |
+| `paths.inbox` | Inbox folder (relative to vault) |
+| `paths.projects` | Projects folder |
+| `paths.ideas` | Ideas folder |
+| `paths.people` | People folder |
+| `paths.tasks` | Tasks folder |
+| `paths.inbox_log` | Inbox log filename |
+| `paths.state_dir` | State and logs directory |
 
 ## Classification Categories
 

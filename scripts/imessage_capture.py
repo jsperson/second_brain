@@ -4,20 +4,77 @@ iMessage Self-Capture Script
 Monitors messages to yourself and writes them to Obsidian inbox.
 
 Part of the Second Brain system.
+Configuration is read from config.yaml in the repo root.
 """
 
 import sqlite3
 import os
 import re
+import yaml
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Configuration
+# =============================================================================
+# Configuration Loading
+# =============================================================================
+
+def load_config():
+    """
+    Load configuration from config files.
+
+    Loads config.yaml as base, then merges config.local.yaml on top if it exists.
+    This allows config.yaml to be committed with placeholder values while
+    config.local.yaml contains actual personal settings (and is gitignored).
+    """
+    script_dir = Path(__file__).parent
+    base_config_path = script_dir.parent / "config.yaml"
+    local_config_path = script_dir.parent / "config.local.yaml"
+
+    if not base_config_path.exists():
+        raise FileNotFoundError(f"Config file not found: {base_config_path}")
+
+    # Load base config
+    with open(base_config_path) as f:
+        config = yaml.safe_load(f)
+
+    # Merge local config if it exists
+    if local_config_path.exists():
+        with open(local_config_path) as f:
+            local_config = yaml.safe_load(f)
+            config = deep_merge(config, local_config)
+
+    return config
+
+
+def deep_merge(base, override):
+    """Deep merge two dictionaries, with override taking precedence."""
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+def expand_path(path_str):
+    """Expand ~ and environment variables in path"""
+    return os.path.expanduser(os.path.expandvars(path_str))
+
+
+# Load configuration
+CONFIG = load_config()
+
+# =============================================================================
+# Derived Configuration
+# =============================================================================
+
 CHAT_DB = os.path.expanduser("~/Library/Messages/chat.db")
-INBOX_PATH = Path("/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Inbox")
-STATE_DIR = Path(os.path.expanduser("~/.imessage-capture"))
+VAULT_PATH = Path(expand_path(CONFIG['paths']['vault']))
+INBOX_PATH = VAULT_PATH / CONFIG['paths']['inbox']
+STATE_DIR = Path(expand_path(CONFIG['paths']['state_dir']))
 STATE_FILE = STATE_DIR / "last_processed"
-SELF_HANDLES = ["+17038673475", "jsperson@gmail.com"]
+SELF_HANDLES = CONFIG['handles']
 
 # Fix command pattern (case insensitive)
 FIX_PATTERN = re.compile(r'^fix:\s*(.+)', re.IGNORECASE)
@@ -25,6 +82,10 @@ FIX_PATTERN = re.compile(r'^fix:\s*(.+)', re.IGNORECASE)
 # Apple's epoch starts at 2001-01-01
 APPLE_EPOCH_OFFSET = 978307200
 
+
+# =============================================================================
+# Utility Functions
+# =============================================================================
 
 def apple_timestamp_to_datetime(apple_ts):
     """Convert Apple's nanosecond timestamp to datetime."""
@@ -214,6 +275,10 @@ Valid categories: people, projects, ideas, tasks
     filepath = INBOX_PATH / filename
     filepath.write_text(content, encoding="utf-8")
 
+
+# =============================================================================
+# Main
+# =============================================================================
 
 def main():
     # Ensure inbox exists

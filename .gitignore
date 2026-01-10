@@ -1,0 +1,23 @@
+# Local configuration with personal values
+config.local.yaml
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs (these are in ~/.imessage-capture/, not in repo)
+*.log

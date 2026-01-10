@@ -10,10 +10,14 @@ This skill is invoked by:
 
 ## Paths
 
-- **Inbox Log**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Inbox-Log.md`
-- **Projects**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Projects/`
-- **Tasks**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Tasks/`
-- **Output**: `/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Inbox/`
+Paths are configured in `config.yaml` (or `config.local.yaml` for personal overrides).
+
+Read the config file to get the actual paths:
+- **vault**: `paths.vault` - Obsidian vault root
+- **Inbox Log**: `{vault}/{paths.inbox_log}`
+- **Projects**: `{vault}/{paths.projects}/`
+- **Tasks**: `{vault}/{paths.tasks}/`
+- **Output**: `{vault}/{paths.inbox}/` (reviews go to Inbox)
 
 ## Instructions
 
