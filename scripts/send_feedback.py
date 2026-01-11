@@ -17,7 +17,7 @@ import os
 import re
 import subprocess
 import yaml
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 # =============================================================================
@@ -262,7 +262,7 @@ def process_needs_review():
             # Update frontmatter to mark feedback as sent
             update_frontmatter(filepath, {
                 'feedback_sent': True,
-                'feedback_sent_at': datetime.now(tz=timezone.utc).isoformat()
+                'feedback_sent_at': datetime.now().astimezone().isoformat()
             })
             sent_count += 1
             print(f"  Sent: {message[:60]}...")

@@ -17,7 +17,7 @@ import os
 import re
 import subprocess
 import yaml
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 # =============================================================================
@@ -372,7 +372,7 @@ def send_feedback_messages():
         if send_imessage(recipient, message):
             update_frontmatter(filepath, {
                 'feedback_sent': True,
-                'feedback_sent_at': datetime.now(tz=timezone.utc).isoformat()
+                'feedback_sent_at': datetime.now().astimezone().isoformat()
             })
             sent_count += 1
             print(f"    Sent: {message[:60]}...")

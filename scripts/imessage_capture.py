@@ -11,7 +11,7 @@ import sqlite3
 import os
 import re
 import yaml
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 # =============================================================================
@@ -121,12 +121,13 @@ def get_category_list():
 # =============================================================================
 
 def apple_timestamp_to_datetime(apple_ts):
-    """Convert Apple's nanosecond timestamp to datetime."""
+    """Convert Apple's nanosecond timestamp to datetime in local timezone."""
     if apple_ts is None or apple_ts == 0:
         return None
     # Apple timestamps are in nanoseconds since 2001-01-01
     unix_ts = (apple_ts / 1_000_000_000) + APPLE_EPOCH_OFFSET
-    return datetime.fromtimestamp(unix_ts, tz=timezone.utc)
+    # Return in local timezone for consistent time display
+    return datetime.fromtimestamp(unix_ts).astimezone()
 
 
 def datetime_to_apple_timestamp(dt):
@@ -176,7 +177,7 @@ def fetch_new_messages(since_ts=None):
     else:
         # First run - just get messages from the last hour to avoid flooding
         one_hour_ago = datetime_to_apple_timestamp(
-            datetime.now(tz=timezone.utc).replace(microsecond=0)
+            datetime.now().astimezone().replace(microsecond=0)
         ) - (3600 * 1_000_000_000)
         query = f"""
             SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.thread_originator_guid
