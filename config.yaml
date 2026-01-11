@@ -35,13 +35,29 @@ paths:
 # =============================================================================
 # Category Mapping (Nate B Jones' Second Brain categories)
 # =============================================================================
-# Maps classification categories to destination folders (relative to vault)
-# Override in config.local.yaml to use different folder names
+# Each category has:
+#   path: Destination folder relative to vault
+#   keywords: Words that trigger this category in fix commands
+#   description: What belongs in this category (used by Claude for classification)
+#
+# You can add custom categories or override in config.local.yaml
 categories:
-  people: "Second Brain/People"       # Info about a person, relationship updates
-  projects: "Second Brain/Projects"   # Multi-step work, ongoing tasks
-  ideas: "Second Brain/Ideas"         # Thoughts, insights, concepts
-  admin: "Second Brain/Admin"         # Simple errands, one-off tasks with due dates
+  people:
+    path: "Second Brain/People"
+    keywords: ['people', 'person', 'contact', 'contacts']
+    description: "Info about a person, relationship updates, follow-ups with someone"
+  projects:
+    path: "Second Brain/Projects"
+    keywords: ['projects', 'project']
+    description: "Multi-step work, ongoing tasks, things with next actions"
+  ideas:
+    path: "Second Brain/Ideas"
+    keywords: ['ideas', 'idea', 'thought', 'concept']
+    description: "Thoughts, insights, concepts to explore later"
+  admin:
+    path: "Second Brain/Admin"
+    keywords: ['admin', 'tasks', 'task', 'todo', 'todos', 'errand', 'errands']
+    description: "Simple errands, one-off items, things with due dates"
 
 # =============================================================================
 # Schedule Frequencies (in seconds)

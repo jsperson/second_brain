@@ -7,14 +7,16 @@ Process unprocessed captures from the Obsidian Inbox, classifying and routing th
 
 ## Configuration
 
-Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get paths. The vault is at `paths.vault`.
+Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get paths and categories.
 
 ### Category Mapping
-The `categories` section maps categories to destination folders:
-- **people**: `{vault}/{categories.people}` - Info about a person
-- **projects**: `{vault}/{categories.projects}` - Multi-step work
-- **ideas**: `{vault}/{categories.ideas}` - Thoughts, concepts
-- **admin**: `{vault}/{categories.admin}` - Simple errands (alias: "tasks")
+Categories are defined in `config.yaml` under the `categories` section. Each category has:
+- `path`: Destination folder relative to vault
+- `keywords`: Words that trigger this category in fix commands (used by Python scripts)
+- `description`: What belongs in this category (use this for classification decisions)
+
+**Read the config file** to get the current list of categories and their descriptions.
+Users can add custom categories or override defaults in `config.local.yaml`.
 
 ## Instructions
 
@@ -22,12 +24,11 @@ The `categories` section maps categories to destination folders:
 
 2. **For each unprocessed file**, read the content and classify it:
 
-   **Categories** (from Nate B Jones' Second Brain guide):
-   - `people` - Information about a person, relationship updates, follow-ups
-   - `projects` - Multi-step work, ongoing tasks, things with next actions
-   - `ideas` - Thoughts, insights, concepts to explore later
-   - `admin` - Simple errands, one-off items, things with due dates (alias: "tasks")
-   - `needs_review` - Unclear, could be multiple categories
+   **Categories**: Read from `config.yaml` categories section.
+   - For each category, use its `description` field to determine what belongs there
+   - If the content clearly matches a category's description, use that category
+   - If unclear which category fits, classify as `needs_review`
+   - `needs_review` - Special status for unclear items (not a destination category)
 
 3. **Handle fix commands** (files with `type: fix_command` in frontmatter):
 
@@ -46,24 +47,15 @@ The `categories` section maps categories to destination folders:
 
 4. **Route to destination** based on classification:
 
-   **For projects:**
-   - Extract project name from content
-   - Create folder `Projects/{ProjectName}/` if it doesn't exist
-   - Move file to that folder
-   - Rename to descriptive name
+   Get the destination path from `categories.{category}.path` in config.
 
-   **For ideas:**
-   - Extract idea title
-   - Move to `Knowledge/Ideas/{title}.md`
+   **General routing:**
+   - Extract a descriptive name from the content
+   - Move to `{category_path}/{descriptive-name}.md`
+   - For categories that group items (like projects), create a subfolder if appropriate
 
-   **For people:**
-   - Extract person's name
-   - Move to `Knowledge/People/{PersonName}.md`
-   - If file exists, append to it instead of overwriting
-
-   **For admin (or tasks):**
-   - Extract task name and due date if present
-   - Move to `{categories.admin}/{task-name}.md` (default: `Tasks/`)
+   **Special handling for people:**
+   - If file exists for that person, append to it instead of overwriting
 
    **For needs_review:**
    - Leave in Inbox (do not move or archive)
@@ -106,11 +98,10 @@ The `categories` section maps categories to destination folders:
 
 ## Classification Guidelines
 
-- **Look for keywords**: "project", "task", "idea", "remember to call [name]"
-- **Projects** have multiple steps or ongoing work
-- **Tasks** are single actions, often with dates
-- **People** mentions a specific person with context about them
-- **Ideas** are conceptual, things to think about later
+- **Read config.yaml** to get current categories and their descriptions
+- **Match content to descriptions**: Use each category's `description` field to decide where content belongs
+- **Look for explicit signals**: Keywords, names, dates, action items
+- **When uncertain**: Use `needs_review` rather than guessing
 
 ## Examples
 

@@ -70,6 +70,15 @@ CLAUDE_EXECUTABLE = expand_path(CONFIG['claude']['executable'])
 
 
 # =============================================================================
+# Category Helpers
+# =============================================================================
+
+def get_category_list():
+    """Get list of category names for feedback messages."""
+    return list(CONFIG.get('categories', {}).keys())
+
+
+# =============================================================================
 # Frontmatter Parsing
 # =============================================================================
 
@@ -350,7 +359,8 @@ def send_feedback_messages():
         if len(body.strip()) > 50:
             preview += "..."
 
-        message = f'[SB:{guid}] Unclear: "{preview}". Reply: tasks/people/projects/ideas'
+        categories = '/'.join(get_category_list())
+        message = f'[SB:{guid}] Unclear: "{preview}". Reply: {categories}'
         print(f"  Sending feedback for: {filepath.name}")
 
         if send_imessage(recipient, message):

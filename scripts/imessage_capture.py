@@ -87,6 +87,36 @@ APPLE_EPOCH_OFFSET = 978307200
 
 
 # =============================================================================
+# Category Helpers
+# =============================================================================
+
+def get_category_path(category):
+    """Get destination path for a category."""
+    cat_config = CONFIG.get('categories', {}).get(category, {})
+    if isinstance(cat_config, str):
+        return cat_config  # Legacy format: direct path string
+    return cat_config.get('path', f"Second Brain/{category.title()}")
+
+
+def get_category_keywords():
+    """Build keyword-to-category mapping from config."""
+    keyword_map = {}
+    for category, cat_config in CONFIG.get('categories', {}).items():
+        if isinstance(cat_config, dict):
+            keywords = cat_config.get('keywords', [category])
+        else:
+            keywords = [category]  # Legacy format
+        for keyword in keywords:
+            keyword_map[keyword.lower()] = category
+    return keyword_map
+
+
+def get_category_list():
+    """Get list of category names for feedback messages."""
+    return list(CONFIG.get('categories', {}).keys())
+
+
+# =============================================================================
 # Utility Functions
 # =============================================================================
 
@@ -259,33 +289,19 @@ def parse_fix_command(text):
 
 def parse_category_from_text(text):
     """
-    Parse natural language to extract target category.
+    Parse natural language to extract target category from config.
 
     Handles various phrasings:
-    - Direct names: "tasks", "people", "projects", "ideas"
+    - Direct category names and their configured keywords
     - Phrases: "move to X", "should be X", "this is an X", "put in X"
-    - Aliases: "task" -> admin, "person" -> people, etc.
 
+    Keywords are loaded from config.yaml categories section.
     Returns the canonical category name or None if not recognized.
     """
     normalized = text.lower().strip()
 
-    # Get valid categories from config
-    valid_categories = list(CONFIG.get('categories', {}).keys())
-
-    # Build keyword to category mapping
-    keyword_to_category = {}
-    category_keywords = {
-        'people': ['people', 'person', 'contact', 'contacts'],
-        'projects': ['projects', 'project'],
-        'ideas': ['ideas', 'idea', 'thought', 'concept'],
-        'admin': ['admin', 'tasks', 'task', 'todo', 'todos', 'errand', 'errands'],
-    }
-
-    for category, keywords in category_keywords.items():
-        if category in valid_categories:
-            for keyword in keywords:
-                keyword_to_category[keyword] = category
+    # Build keyword map from config
+    keyword_to_category = get_category_keywords()
 
     # Try phrase patterns first (more specific)
     phrase_patterns = [
@@ -392,6 +408,7 @@ target_category: {target_category}
         print(f"Created fix command: {filename} ({target_info})")
     else:
         # Category not recognized - create as needs_review
+        categories = get_category_list()
         content = f"""---
 captured: {iso_timestamp}
 source: imessage
@@ -404,8 +421,7 @@ target_category: unknown
 {text}
 
 Note: Could not determine target category from text: "{text}"
-Valid categories: people, projects, ideas, tasks (admin)
-Examples: "move to tasks", "should be people", "ideas", "project"
+Valid categories: {', '.join(categories)}
 """
         print(f"Created fix command: {filename} (category unclear)")
 
