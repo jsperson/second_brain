@@ -208,17 +208,30 @@ def get_fix_target_guid(thread_originator_guid):
         return None
 
     # Fetch parent message text from database
+    # Note: Messages sent via AppleScript may have text in attributedBody instead of text
     conn = sqlite3.connect(CHAT_DB)
     cursor = conn.cursor()
-    cursor.execute("SELECT text FROM message WHERE guid = ?", (thread_originator_guid,))
+    cursor.execute("SELECT text, attributedBody FROM message WHERE guid = ?", (thread_originator_guid,))
     row = cursor.fetchone()
     conn.close()
 
-    if row and row[0]:
-        match = FEEDBACK_PATTERN.search(row[0])
-        if match:
-            # Parent is a feedback message - return embedded original GUID
-            return match.group(1)
+    if row:
+        # Try text column first
+        if row[0]:
+            match = FEEDBACK_PATTERN.search(row[0])
+            if match:
+                return match.group(1)
+
+        # Fall back to attributedBody (used by AppleScript-sent messages)
+        if row[1]:
+            try:
+                # attributedBody is a blob, decode and search for pattern
+                decoded = row[1].decode('utf-8', errors='ignore')
+                match = FEEDBACK_PATTERN.search(decoded)
+                if match:
+                    return match.group(1)
+            except Exception:
+                pass
 
     # Parent is not a feedback message - return it directly
     return thread_originator_guid
