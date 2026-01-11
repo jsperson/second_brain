@@ -79,6 +79,9 @@ SELF_HANDLES = CONFIG['handles']
 # Fix command pattern (case insensitive)
 FIX_PATTERN = re.compile(r'^fix:\s*(.+)', re.IGNORECASE)
 
+# Feedback message pattern - extracts original GUID from [SB:GUID] marker
+FEEDBACK_PATTERN = re.compile(r'\[SB:([A-F0-9-]+)\]', re.IGNORECASE)
+
 # Apple's epoch starts at 2001-01-01
 APPLE_EPOCH_OFFSET = 978307200
 
@@ -174,44 +177,124 @@ def sanitize_filename(text, max_length=50):
     return safe_chars if safe_chars else "capture"
 
 
+def is_feedback_message(text):
+    """
+    Check if message is a system feedback message (should be ignored).
+
+    Feedback messages start with [SB:...] marker and are sent by the
+    send_feedback.py script to ask for classification of needs_review items.
+    """
+    return text and text.startswith('[SB:')
+
+
+def get_fix_target_guid(thread_originator_guid):
+    """
+    Determine the actual target GUID for a fix command.
+
+    When a user replies to a message, the reply's thread_originator_guid
+    points to the parent message. If the parent is a feedback message
+    (contains [SB:GUID]), we need to extract and return the embedded
+    original capture GUID instead.
+
+    Args:
+        thread_originator_guid: GUID of the message being replied to
+
+    Returns:
+        The GUID to use as the fix target:
+        - If parent is a feedback message: the embedded original GUID
+        - Otherwise: the thread_originator_guid itself (direct reply to capture)
+    """
+    if not thread_originator_guid:
+        return None
+
+    # Fetch parent message text from database
+    conn = sqlite3.connect(CHAT_DB)
+    cursor = conn.cursor()
+    cursor.execute("SELECT text FROM message WHERE guid = ?", (thread_originator_guid,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row and row[0]:
+        match = FEEDBACK_PATTERN.search(row[0])
+        if match:
+            # Parent is a feedback message - return embedded original GUID
+            return match.group(1)
+
+    # Parent is not a feedback message - return it directly
+    return thread_originator_guid
+
+
 def parse_fix_command(text):
     """
-    Check if text is a fix command and extract the target category.
+    Check if text is a fix command using the legacy 'fix:' prefix.
 
     Returns tuple (is_fix, target_category) where target_category is one of
     the configured categories (people, projects, ideas, admin) or None if
     not recognized.
 
-    Uses category names from config.yaml. The 'tasks' keyword is an alias
-    for 'admin' (the original Second Brain category name).
+    This handles the 'fix: category' syntax for non-reply fix commands.
     """
     match = FIX_PATTERN.match(text.strip())
     if not match:
         return False, None
 
-    correction = match.group(1).lower().strip()
+    correction = match.group(1)
+    target_category = parse_category_from_text(correction)
+    return True, target_category
+
+
+def parse_category_from_text(text):
+    """
+    Parse natural language to extract target category.
+
+    Handles various phrasings:
+    - Direct names: "tasks", "people", "projects", "ideas"
+    - Phrases: "move to X", "should be X", "this is an X", "put in X"
+    - Aliases: "task" -> admin, "person" -> people, etc.
+
+    Returns the canonical category name or None if not recognized.
+    """
+    normalized = text.lower().strip()
 
     # Get valid categories from config
     valid_categories = list(CONFIG.get('categories', {}).keys())
 
-    # Map various phrasings to categories
-    # Keys are the canonical category names from config
+    # Build keyword to category mapping
+    keyword_to_category = {}
     category_keywords = {
-        'people': ['people', 'person', 'contact'],
+        'people': ['people', 'person', 'contact', 'contacts'],
         'projects': ['projects', 'project'],
-        'ideas': ['ideas', 'idea'],
-        'admin': ['admin', 'tasks', 'task', 'todo', 'errand'],  # 'tasks' is alias for 'admin'
+        'ideas': ['ideas', 'idea', 'thought', 'concept'],
+        'admin': ['admin', 'tasks', 'task', 'todo', 'todos', 'errand', 'errands'],
     }
 
     for category, keywords in category_keywords.items():
-        # Only use categories that are in the config
         if category in valid_categories:
             for keyword in keywords:
-                if keyword in correction:
-                    return True, category
+                keyword_to_category[keyword] = category
 
-    # Fix command recognized but category unclear
-    return True, None
+    # Try phrase patterns first (more specific)
+    phrase_patterns = [
+        r'move\s+(?:it\s+)?to\s+(\w+)',       # "move to tasks", "move it to people"
+        r'should\s+(?:be|go\s+to)\s+(\w+)',   # "should be projects", "should go to ideas"
+        r'this\s+is\s+(?:an?\s+)?(\w+)',      # "this is a task", "this is an idea"
+        r'put\s+(?:it\s+)?in\s+(\w+)',        # "put in admin", "put it in projects"
+        r'file\s+(?:as|under)\s+(\w+)',       # "file as ideas", "file under projects"
+    ]
+
+    for pattern in phrase_patterns:
+        match = re.search(pattern, normalized)
+        if match:
+            keyword = match.group(1)
+            if keyword in keyword_to_category:
+                return keyword_to_category[keyword]
+
+    # Fall back to direct keyword match
+    for keyword, category in keyword_to_category.items():
+        if re.search(r'\b' + re.escape(keyword) + r'\b', normalized):
+            return category
+
+    return None
 
 
 def write_capture(apple_ts, text, guid):
@@ -306,8 +389,9 @@ target_category: unknown
 
 {text}
 
-Note: Could not determine target category from fix command.
-Valid categories: people, projects, ideas, tasks
+Note: Could not determine target category from text: "{text}"
+Valid categories: people, projects, ideas, tasks (admin)
+Examples: "move to tasks", "should be people", "ideas", "project"
 """
         print(f"Created fix command: {filename} (category unclear)")
 
@@ -337,15 +421,28 @@ def main():
 
     newest_ts = last_ts
     for rowid, apple_ts, text, is_from_me, guid, thread_originator_guid in messages:
-        # Check if this is a fix command
-        is_fix, target_category = parse_fix_command(text)
+        # Skip system feedback messages (sent by send_feedback.py)
+        if is_feedback_message(text):
+            print(f"Skipping feedback message: {text[:40]}...")
+            if newest_ts is None or apple_ts > newest_ts:
+                newest_ts = apple_ts
+            continue
 
-        if is_fix:
-            # Pass guid (this message's ID) and thread_originator_guid (the message being replied to)
-            write_fix_command(apple_ts, text, target_category, guid, thread_originator_guid)
+        # Check for reply first - any reply is a fix command
+        if thread_originator_guid is not None:
+            # Reply to a previous message - resolve actual target GUID
+            # (handles replies to feedback messages by extracting embedded GUID)
+            target_guid = get_fix_target_guid(thread_originator_guid)
+            target_category = parse_category_from_text(text)
+            write_fix_command(apple_ts, text, target_category, guid, target_guid)
         else:
-            # Pass guid so captures can be targeted by reply-based fixes
-            write_capture(apple_ts, text, guid)
+            # Not a reply - check for legacy "fix:" prefix
+            is_fix, target_category = parse_fix_command(text)
+            if is_fix:
+                write_fix_command(apple_ts, text, target_category, guid, None)
+            else:
+                # Regular capture
+                write_capture(apple_ts, text, guid)
 
         if newest_ts is None or apple_ts > newest_ts:
             newest_ts = apple_ts

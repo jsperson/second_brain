@@ -109,10 +109,9 @@ INBOX_PROCESSOR_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 
     <key>ProgramArguments</key>
     <array>
-        <string>{claude_executable}</string>
-        <string>--print</string>
-        <string>--dangerously-skip-permissions</string>
-        <string>/process-inbox</string>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>{claude_executable} --print --dangerously-skip-permissions /process-inbox; python3 {repo_dir}/scripts/send_feedback.py</string>
     </array>
 
     <key>WorkingDirectory</key>

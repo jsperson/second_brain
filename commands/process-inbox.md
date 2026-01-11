@@ -30,6 +30,12 @@ The `categories` section maps categories to destination folders:
    - `needs_review` - Unclear, could be multiple categories
 
 3. **Handle fix commands** (files with `type: fix_command` in frontmatter):
+
+   Fix commands are created two ways:
+   - **Reply to message**: Any iMessage reply to a previous capture (natural language: "tasks", "move to people", etc.)
+   - **Legacy prefix**: Non-reply message starting with "fix:" (e.g., "fix: projects")
+
+   Processing steps:
    - Read the `target_category` from frontmatter
    - **Find target capture** using one of two methods:
      - If `reply_to_guid` is present: Search Inbox and destination folders for a file with matching `imessage_guid` in frontmatter
@@ -60,8 +66,11 @@ The `categories` section maps categories to destination folders:
    - Move to `{categories.admin}/{task-name}.md` (default: `Tasks/`)
 
    **For needs_review:**
-   - Leave in Inbox
+   - Leave in Inbox (do not move or archive)
    - Update frontmatter with `needs_review: true`
+   - Do NOT set `feedback_sent` (the feedback script handles this)
+   - After processing, `send_feedback.py` will send an iMessage asking for clarification
+   - User can reply to the feedback message to classify the capture
 
 5. **Archive original file**:
    - Create `Inbox/Processed/` folder if it doesn't exist

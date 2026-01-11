@@ -84,3 +84,11 @@ claude:
   # Find yours with: which claude
   # Common paths: ~/.npm-global/bin/claude, /usr/local/bin/claude
   executable: "/usr/local/bin/claude"
+
+# =============================================================================
+# Feedback Loop
+# =============================================================================
+# When captures are classified as needs_review, send an iMessage back asking
+# for clarification. User can reply to classify the original capture.
+feedback:
+  enabled: true

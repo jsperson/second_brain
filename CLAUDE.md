@@ -114,14 +114,17 @@ The following commands are available:
 
 ## Fix Mechanism
 
-Users can correct misclassifications by sending "fix: category" via iMessage.
+Users can correct misclassifications via iMessage in two ways:
 
-**Targeted fix (recommended):** Reply to the specific message you want to fix:
+**Reply-based fix (recommended):** Reply to the specific message you want to fix:
 - Long-press or swipe on the message in iMessage
-- Reply with `fix: tasks` (or another category)
+- Reply with the target category using natural language:
+  - Direct: `tasks`, `people`, `projects`, `ideas`
+  - Phrases: `move to tasks`, `should be people`, `this is an idea`
+- No "fix:" prefix needed - any reply is automatically treated as a fix command
 - The system uses the `reply_to_guid` to find the matching capture by `imessage_guid`
 
-**Fallback fix:** Send as a new message (fixes most recent):
+**Legacy fix (fixes most recent):** Send as a new message with "fix:" prefix:
 - `fix: people` - Reclassify most recent item as people
 - `fix: projects` - Reclassify as projects
 - `fix: ideas` - Reclassify as ideas

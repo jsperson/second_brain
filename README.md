@@ -77,12 +77,15 @@ If the AI misclassifies, you can fix it via iMessage:
 
 **Option 1: Reply to the message (recommended)**
 - Long-press or swipe on the misclassified message in iMessage
-- Reply with `fix: tasks` (or the correct category)
+- Reply with the target category using natural language:
+  - Direct: `tasks`, `people`, `projects`, `ideas`
+  - Phrases: `move to tasks`, `should be people`, `this is an idea`
+- No "fix:" prefix needed - any reply is automatically a fix command
 - This targets that specific capture, even if it's not the most recent
 
 **Option 2: Send a new message (fixes most recent)**
 ```
-fix: should be tasks
+fix: tasks
 ```
 
 The capture will be reclassified and moved to the correct destination.
