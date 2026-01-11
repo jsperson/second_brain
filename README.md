@@ -122,6 +122,9 @@ second_brain/
 ├── config.yaml            # Base configuration
 ├── config.local.yaml      # Your personal overrides (gitignored)
 ├── scripts/
+│   ├── setup.py                  # Interactive setup wizard
+│   ├── diagnose.py               # Diagnostic tool
+│   ├── uninstall.py              # Clean uninstall (preserves data)
 │   ├── imessage_capture.py       # Capture iMessages to Inbox
 │   ├── process_inbox.py          # Wrapper: check for work, invoke Claude, send feedback
 │   ├── send_feedback.py          # Send iMessage for unclear items
@@ -158,7 +161,41 @@ YourVault/
 
 ## Installation
 
-See [docs/installation.md](docs/installation.md) for detailed setup instructions.
+### Quick Start (Recommended)
+
+Run the interactive setup wizard:
+
+```bash
+cd ~/source/second_brain
+python3 scripts/setup.py
+```
+
+The wizard will guide you through:
+- Detecting your Obsidian vault and Claude installation
+- Configuring your iMessage handles
+- Creating required folders
+- Installing automation jobs
+- Setting up permissions
+
+### Diagnostics
+
+If something isn't working, run the diagnostic tool:
+
+```bash
+python3 scripts/diagnose.py
+```
+
+### Manual Installation
+
+For step-by-step manual installation, see [docs/installation.md](docs/installation.md).
+
+### Uninstall
+
+To remove automation (preserves your notes and data):
+
+```bash
+python3 scripts/uninstall.py
+```
 
 ## Configuration
 

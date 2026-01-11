@@ -2,6 +2,33 @@
 
 This guide walks through setting up the Second Brain system on a fresh Mac or migrating from an existing installation.
 
+## Quick Start (Recommended)
+
+The interactive setup wizard handles most of the installation automatically:
+
+```bash
+cd ~/source/second_brain
+python3 scripts/setup.py
+```
+
+The wizard will:
+1. Detect your Obsidian vault and Claude installation
+2. Prompt for your phone number and Apple ID email
+3. Create `config.local.yaml` with your settings
+4. Create all required vault folders
+5. Generate and install launchd jobs
+6. Guide you through Automator app creation
+7. Help you grant required permissions
+8. Run diagnostics to verify everything works
+
+**After setup, skip to [Testing](#24-test-capture) to verify your installation.**
+
+---
+
+## Manual Installation
+
+If you prefer to install manually, or the wizard doesn't work for your setup, follow the steps below.
+
 ## Prerequisites
 
 - **macOS** (tested on macOS 15+)
@@ -240,6 +267,21 @@ tail -f ~/.imessage-capture/launchd.log
 
 ## Troubleshooting
 
+### Run Diagnostics First
+
+Before diving into specific issues, run the diagnostic tool:
+
+```bash
+python3 scripts/diagnose.py
+```
+
+This checks all components and shows pass/fail status for:
+- Configuration files
+- Vault folders
+- Permissions (Full Disk Access)
+- Launchd jobs
+- Claude Code installation
+
 ### "authorization denied" Error
 
 Full Disk Access not granted to the Automator app. See Part 2.2.
@@ -275,7 +317,19 @@ Full Disk Access not granted to the Automator app. See Part 2.2.
 
 ## Uninstall
 
-To remove Second Brain automation:
+### Using the Uninstall Script (Recommended)
+
+```bash
+python3 scripts/uninstall.py
+```
+
+This removes automation components while **preserving your notes and data**:
+- Removes: launchd jobs, Automator app, state files
+- Preserves: all notes, Inbox-Log.md, vault folders, config.local.yaml
+
+### Manual Uninstall
+
+To remove Second Brain automation manually:
 
 ```bash
 # Stop all jobs
