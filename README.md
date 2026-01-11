@@ -39,7 +39,9 @@ This system implements the "Second Brain" workflow:
 ### Scripts
 
 - **imessage_capture.py** - Monitors Messages database, writes captures to Obsidian Inbox
-- **Launchd plists** - Schedule automation jobs
+- **process_inbox.py** - Wrapper that checks for work before invoking Claude (reduces LLM usage)
+- **send_feedback.py** - Sends iMessage feedback for unclear captures (integrated into process_inbox.py)
+- **generate_plists.py** - Generates launchd plists from config
 
 ### Claude Code Commands
 
@@ -52,9 +54,11 @@ This system implements the "Second Brain" workflow:
 | Job | Frequency | Purpose |
 |-----|-----------|---------|
 | iMessage Capture | Every 1 min | Capture new messages |
-| Inbox Processor | Every 5 min | Classify and route |
+| Inbox Processor | Every 5 min | Check for work, classify, send feedback |
 | Daily Digest | 7:00 AM | Morning summary |
 | Weekly Review | Sunday 4 PM | Week in review |
+
+**Note:** The Inbox Processor only invokes Claude when there are unprocessed items, minimizing LLM usage during idle periods.
 
 ## Quick Start
 
@@ -90,6 +94,16 @@ fix: tasks
 
 The capture will be reclassified and moved to the correct destination.
 
+### Unclear Captures (Feedback Loop)
+
+When the AI can't confidently classify a capture, it marks it as `needs_review` and sends you an iMessage:
+
+```
+[SB:ABC123...] Unclear: "remember the thing". Reply: tasks/people/projects/ideas
+```
+
+Simply reply with the category (e.g., "tasks") and the capture will be classified and routed.
+
 ### Manual Commands
 
 Run commands directly in Claude Code:
@@ -105,12 +119,14 @@ Run commands directly in Claude Code:
 second_brain/
 ├── CLAUDE.md              # Claude Code instructions
 ├── README.md              # This file
+├── config.yaml            # Base configuration
+├── config.local.yaml      # Your personal overrides (gitignored)
 ├── scripts/
-│   ├── imessage_capture.py
-│   ├── com.jsperson.imessage-capture.plist
-│   ├── com.jsperson.inbox-processor.plist
-│   ├── com.jsperson.daily-digest.plist
-│   └── com.jsperson.weekly-review.plist
+│   ├── imessage_capture.py       # Capture iMessages to Inbox
+│   ├── process_inbox.py          # Wrapper: check for work, invoke Claude, send feedback
+│   ├── send_feedback.py          # Send iMessage for unclear items
+│   ├── generate_plists.py        # Generate launchd plists from config
+│   └── *.plist                   # Generated launchd job definitions
 ├── commands/
 │   ├── process-inbox.md
 │   ├── daily-digest.md

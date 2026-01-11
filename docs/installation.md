@@ -142,7 +142,10 @@ It should recognize the command and show the instructions.
 
 ## Part 4: Inbox Processor Setup (Optional)
 
-The inbox processor runs Claude Code on a schedule to classify captures automatically.
+The inbox processor runs on a schedule to classify captures automatically. It uses a Python wrapper (`process_inbox.py`) that:
+- Checks for unprocessed items before invoking Claude (reduces LLM usage)
+- Sends feedback iMessages for unclear captures
+- Only calls Claude when there's actual work to do
 
 **Note:** This requires Claude Code to be able to run non-interactively. Test first:
 
@@ -152,18 +155,31 @@ claude --print "/process-inbox"
 
 If this works, proceed:
 
-### 4.1 Install Processor Launchd Job
+### 4.1 Grant Messages Automation Permission
+
+The feedback feature sends iMessages via AppleScript. The first time it runs, macOS may prompt for permission. If messages fail to send:
+
+1. Open **System Settings** → **Privacy & Security** → **Automation**
+2. Find **Terminal** (or the app running the script)
+3. Enable the **Messages** checkbox
+
+### 4.2 Install Processor Launchd Job
 
 ```bash
 cp ~/source/second_brain/scripts/com.jsperson.inbox-processor.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.jsperson.inbox-processor.plist
 ```
 
-### 4.2 Verify
+### 4.3 Verify
 
 Check logs after 5 minutes:
 ```bash
 tail ~/.imessage-capture/inbox-processor.log
+```
+
+If the inbox is empty, you should see:
+```
+No unprocessed items in Inbox. Skipping Claude.
 ```
 
 ## Part 5: Digest Setup (Optional)
@@ -243,9 +259,19 @@ Full Disk Access not granted to the Automator app. See Part 2.2.
 
 ### Fix Command Not Working
 
-1. Ensure message starts with `fix:` (case insensitive)
-2. Check `Inbox-Log.md` has recent entries
-3. Verify processor is running
+1. **Reply-based fix (recommended):** Reply to the original message with the category
+   - Any reply is automatically treated as a fix command
+   - Use natural language: `tasks`, `move to people`, `should be ideas`
+2. **Legacy fix:** Send new message starting with `fix:` (fixes most recent)
+3. Check `Inbox-Log.md` has recent entries
+4. Verify processor is running
+
+### Feedback Messages Not Sending
+
+1. Check **System Settings** → **Privacy & Security** → **Automation**
+2. Ensure Terminal has permission to control Messages
+3. Test manually: `osascript -e 'tell application "Messages" to activate'`
+4. Check logs: `tail ~/.imessage-capture/inbox-processor-error.log`
 
 ## Uninstall
 
