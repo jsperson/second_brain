@@ -7,12 +7,13 @@ Generate a daily summary of tasks, active projects, and people follow-ups.
 
 ## Configuration
 
-Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get paths:
+Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get:
 - **vault**: `paths.vault` - Obsidian vault root
 - **Tasks**: `{vault}/Tasks/`
 - **Projects**: `{vault}/Projects/`
 - **People**: `{vault}/Knowledge/People/`
-- **Output**: `{vault}/Inbox/` (digests go to Inbox)
+- **Output**: `{vault}/Reports/` (digests go to Reports folder)
+- **recipient**: `handles[0]` - iMessage recipient for notifications
 
 ## Instructions
 
@@ -32,7 +33,7 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - Identify any pending follow-ups
 
 4. **Generate Digest**
-   - Create file: `Inbox/Daily-Digest-{YYYYMMDD}.md`
+   - Create file: `Reports/Daily-Digest-{YYYYMMDD}.md`
    - Use the format below
    - Keep it concise (under 150 words in the body)
 
@@ -40,6 +41,17 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - Top 3 most important/urgent actions
    - Overdue items first
    - Items with explicit due dates before open-ended ones
+
+6. **Send Notification**
+   - Send iMessage to recipient with Obsidian link
+   - Use this exact format (the [SB] prefix prevents capture loop):
+   ```
+   [SB] Daily digest ready: obsidian://open?vault=Second%20Brain&file=Reports%2FDaily-Digest-{YYYYMMDD}
+   ```
+   - Send via osascript:
+   ```bash
+   osascript -e 'tell application "Messages" to send "[SB] Daily digest ready: obsidian://open?vault=Second%20Brain&file=Reports%2FDaily-Digest-{YYYYMMDD}" to participant "{recipient}" of account id (id of 1st account whose service type = iMessage)'
+   ```
 
 ## Output Format
 

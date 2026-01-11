@@ -7,12 +7,13 @@ Generate a weekly review analyzing captures, project progress, and patterns.
 
 ## Configuration
 
-Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get paths:
+Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) to get:
 - **vault**: `paths.vault` - Obsidian vault root
 - **Inbox Log**: `{vault}/Inbox-Log.md`
 - **Projects**: `{vault}/Projects/`
 - **Tasks**: `{vault}/Tasks/`
-- **Output**: `{vault}/Inbox/` (reviews go to Inbox)
+- **Output**: `{vault}/Reports/` (reviews go to Reports folder)
+- **recipient**: `handles[0]` - iMessage recipient for notifications
 
 ## Instructions
 
@@ -34,7 +35,7 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - Note patterns in task types
 
 4. **Generate Review**
-   - Create file: `Inbox/Weekly-Review-{YYYYMMDD}.md`
+   - Create file: `Reports/Weekly-Review-{YYYYMMDD}.md`
    - Use the format below
    - Keep it analytical and actionable (under 250 words body)
 
@@ -42,6 +43,17 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - What themes emerged this week?
    - Where is energy/attention going?
    - What's being neglected?
+
+6. **Send Notification**
+   - Send iMessage to recipient with Obsidian link
+   - Use this exact format (the [SB] prefix prevents capture loop):
+   ```
+   [SB] Weekly review ready: obsidian://open?vault=Second%20Brain&file=Reports%2FWeekly-Review-{YYYYMMDD}
+   ```
+   - Send via osascript:
+   ```bash
+   osascript -e 'tell application "Messages" to send "[SB] Weekly review ready: obsidian://open?vault=Second%20Brain&file=Reports%2FWeekly-Review-{YYYYMMDD}" to participant "{recipient}" of account id (id of 1st account whose service type = iMessage)'
+   ```
 
 ## Output Format
 

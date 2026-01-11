@@ -177,14 +177,15 @@ def sanitize_filename(text, max_length=50):
     return safe_chars if safe_chars else "capture"
 
 
-def is_feedback_message(text):
+def is_system_message(text):
     """
-    Check if message is a system feedback message (should be ignored).
+    Check if message is a system message (should be ignored).
 
-    Feedback messages start with [SB:...] marker and are sent by the
-    send_feedback.py script to ask for classification of needs_review items.
+    System messages start with [SB marker and include:
+    - Feedback requests: [SB:GUID] Unclear: "..."
+    - Report notifications: [SB] Daily digest ready: ...
     """
-    return text and text.startswith('[SB:')
+    return text and text.startswith('[SB')
 
 
 def get_fix_target_guid(thread_originator_guid):
@@ -434,9 +435,9 @@ def main():
 
     newest_ts = last_ts
     for rowid, apple_ts, text, is_from_me, guid, thread_originator_guid in messages:
-        # Skip system feedback messages (sent by send_feedback.py)
-        if is_feedback_message(text):
-            print(f"Skipping feedback message: {text[:40]}...")
+        # Skip system messages (feedback requests, report notifications)
+        if is_system_message(text):
+            print(f"Skipping system message: {text[:40]}...")
             if newest_ts is None or apple_ts > newest_ts:
                 newest_ts = apple_ts
             continue
