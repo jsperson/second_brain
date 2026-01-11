@@ -63,10 +63,13 @@ def expand_path(path_str):
 # Load configuration
 CONFIG = load_config()
 
+SCRIPT_DIR = Path(__file__).parent
+REPO_DIR = SCRIPT_DIR.parent
 VAULT_PATH = Path(expand_path(CONFIG['paths']['vault']))
 INBOX_PATH = VAULT_PATH / CONFIG['paths']['inbox']
 INBOX_LOG_PATH = VAULT_PATH / "Inbox-Log.md"
 CLAUDE_EXECUTABLE = expand_path(CONFIG['claude']['executable'])
+PROCESS_INBOX_COMMAND = REPO_DIR / '.claude' / 'commands' / 'process-inbox.md'
 
 
 # =============================================================================
@@ -262,11 +265,18 @@ def find_needs_review_items():
 
 def run_claude_processor():
     """Invoke Claude to process inbox items."""
-    print("Invoking Claude /process-inbox...")
+    print("Invoking Claude process-inbox...")
+
+    # Read command file directly instead of relying on skill discovery
+    if not PROCESS_INBOX_COMMAND.exists():
+        print(f"Error: Command file not found: {PROCESS_INBOX_COMMAND}")
+        return False
+
+    command_content = PROCESS_INBOX_COMMAND.read_text()
 
     try:
         result = subprocess.run(
-            [CLAUDE_EXECUTABLE, '--print', '--dangerously-skip-permissions', '/process-inbox'],
+            [CLAUDE_EXECUTABLE, '--print', '--dangerously-skip-permissions', command_content],
             cwd=str(VAULT_PATH),
             capture_output=True,
             text=True,
