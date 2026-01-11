@@ -44,16 +44,14 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - Where is energy/attention going?
    - What's being neglected?
 
-6. **Send Notification**
-   - Send iMessage to recipient with Obsidian link
-   - Use this exact format (the [SB] prefix prevents capture loop):
-   ```
-   [SB] Weekly review ready: obsidian://open?vault=Second%20Brain&file=Reports%2FWeekly-Review-{YYYYMMDD}
-   ```
-   - Send via osascript:
+6. **Send Notification (REQUIRED)**
+   - Get recipient from config: `handles[0]`
+   - **Execute this bash command** to send iMessage notification:
    ```bash
-   osascript -e 'tell application "Messages" to send "[SB] Weekly review ready: obsidian://open?vault=Second%20Brain&file=Reports%2FWeekly-Review-{YYYYMMDD}" to participant "{recipient}" of account id (id of 1st account whose service type = iMessage)'
+   osascript -e 'tell application "Messages" to send "[SB] Weekly review ready: obsidian://open?vault=Second%20Brain&file=Second%20Brain%2FReports%2FWeekly-Review-{YYYYMMDD}" to participant "{recipient}" of account id (id of 1st account whose service type = iMessage)'
    ```
+   - Replace `{YYYYMMDD}` with today's date and `{recipient}` with the handle from config
+   - The `[SB]` prefix prevents this message from being captured as an inbox item
 
 ## Output Format
 
