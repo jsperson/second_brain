@@ -7,9 +7,8 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>-c</string>
-        <string>/Users/jsperson/.npm-global/bin/claude --print --dangerously-skip-permissions /process-inbox; python3 /Users/jsperson/source/second_brain/scripts/send_feedback.py</string>
+        <string>/usr/bin/python3</string>
+        <string>/Users/jsperson/source/second_brain/scripts/process_inbox.py</string>
     </array>
 
     <key>WorkingDirectory</key>
