@@ -7,12 +7,14 @@ Flow:
 1. Scan Inbox for files with processed: false
 2. If none found, exit early (no Claude call)
 3. If found, invoke Claude /process-inbox
-4. After Claude finishes, send feedback for needs_review items
+4. After Claude finishes, strip metadata from newly-filed notes
+5. Send feedback for needs_review items
 
 This replaces the direct Claude call in the launchd plist.
 """
 
 import os
+import re
 import subprocess
 import yaml
 from datetime import datetime, timezone
@@ -63,6 +65,7 @@ CONFIG = load_config()
 
 VAULT_PATH = Path(expand_path(CONFIG['paths']['vault']))
 INBOX_PATH = VAULT_PATH / CONFIG['paths']['inbox']
+INBOX_LOG_PATH = VAULT_PATH / "Inbox-Log.md"
 CLAUDE_EXECUTABLE = expand_path(CONFIG['claude']['executable'])
 
 
@@ -85,6 +88,112 @@ def parse_frontmatter(content):
         return frontmatter or {}, body
     except yaml.YAMLError:
         return {}, content
+
+
+# =============================================================================
+# Metadata Stripping
+# =============================================================================
+
+def get_log_line_count():
+    """Get the current line count of the Inbox-Log.md file."""
+    if not INBOX_LOG_PATH.exists():
+        return 0
+    return len(INBOX_LOG_PATH.read_text(encoding='utf-8').splitlines())
+
+
+def parse_new_log_entries(start_line):
+    """
+    Parse new log entries added after start_line.
+
+    Returns list of destination paths for successfully filed items.
+    """
+    if not INBOX_LOG_PATH.exists():
+        return []
+
+    lines = INBOX_LOG_PATH.read_text(encoding='utf-8').splitlines()
+    new_lines = lines[start_line:]
+
+    destinations = []
+
+    # Pattern to match table rows: | Time | Original | Filed To | Destination | Status |
+    # We want rows where Status is Filed, Fixed, or Reclassified
+    # and Destination is a real path (not containing "(kept)")
+    table_pattern = re.compile(
+        r'^\|\s*[\d:]+\s*\|'  # Time column
+        r'[^|]+\|'            # Original column
+        r'[^|]+\|'            # Filed To column
+        r'\s*([^|]+?)\s*\|'   # Destination column (capture group)
+        r'\s*(Filed|Fixed|Reclassified)\s*\|'  # Status column
+    )
+
+    for line in new_lines:
+        match = table_pattern.match(line)
+        if match:
+            destination = match.group(1).strip()
+            # Skip entries that stayed in inbox
+            if '(kept)' not in destination and destination:
+                destinations.append(destination)
+
+    return destinations
+
+
+def strip_file_metadata(filepath):
+    """
+    Strip processing metadata from a filed note, keeping only the content.
+
+    Removes all frontmatter, leaving just the note body.
+    """
+    if not filepath.exists():
+        print(f"  Warning: File not found: {filepath}")
+        return False
+
+    try:
+        content = filepath.read_text(encoding='utf-8')
+        _, body = parse_frontmatter(content)
+
+        # Write back just the body content
+        filepath.write_text(body.strip() + '\n', encoding='utf-8')
+        return True
+    except Exception as e:
+        print(f"  Error stripping metadata from {filepath}: {e}")
+        return False
+
+
+def strip_metadata_from_new_files(start_line):
+    """
+    Strip metadata from files that were just moved by Claude.
+
+    Uses the Inbox-Log.md to identify which files were processed.
+    """
+    destinations = parse_new_log_entries(start_line)
+
+    if not destinations:
+        print("No new files to strip metadata from.")
+        return 0
+
+    print(f"Stripping metadata from {len(destinations)} file(s)...")
+    stripped_count = 0
+
+    for dest in destinations:
+        # Destination is relative to vault, e.g. "Second Brain/People/Name.md"
+        filepath = VAULT_PATH.parent / dest  # Go up from "Second Brain" to get full path
+
+        # Actually the vault path is already the full path to the vault
+        # and destinations start with "Second Brain/", so we need to handle this
+        # Let's check if destination starts with vault folder name
+        vault_name = VAULT_PATH.name  # "Second Brain"
+        if dest.startswith(vault_name + "/"):
+            # Strip the vault name prefix
+            relative_path = dest[len(vault_name) + 1:]
+            filepath = VAULT_PATH / relative_path
+        else:
+            filepath = VAULT_PATH / dest
+
+        print(f"  Stripping: {filepath.name}")
+        if strip_file_metadata(filepath):
+            stripped_count += 1
+
+    return stripped_count
 
 
 # =============================================================================
@@ -279,10 +388,17 @@ def main():
         for item in unprocessed:
             print(f"  - {item.name}")
 
+        # Record log position before Claude runs
+        log_start_line = get_log_line_count()
+
         # Step 2: Run Claude to process
         run_claude_processor()
 
-    # Step 3: Send feedback for needs_review items
+        # Step 3: Strip metadata from newly-filed notes
+        stripped = strip_metadata_from_new_files(log_start_line)
+        print(f"Stripped metadata from {stripped} file(s).")
+
+    # Step 4: Send feedback for needs_review items
     # (Run this even if no unprocessed items - there might be items from a previous run)
     sent = send_feedback_messages()
 
