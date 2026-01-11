@@ -14,9 +14,19 @@
     <key>WorkingDirectory</key>
     <string>/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott</string>
 
-    <!-- Run every 300 seconds -->
+    <!-- Watch Inbox for changes (new files, modifications) -->
+    <key>WatchPaths</key>
+    <array>
+        <string>/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott/Second Brain/Inbox</string>
+    </array>
+
+    <!-- Prevent running more than once per 10 seconds (batches rapid changes) -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <!-- Fallback: also run periodically in case WatchPaths misses something -->
     <key>StartInterval</key>
-    <integer>300</integer>
+    <integer>1800</integer>
 
     <!-- Also run immediately when loaded -->
     <key>RunAtLoad</key>

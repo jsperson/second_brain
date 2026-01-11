@@ -264,6 +264,11 @@ def send_feedback_messages():
 def main():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Inbox processor starting...")
 
+    # Delay to ensure file writes are complete (especially with iCloud sync)
+    import time
+    print("Waiting 10 seconds for file sync to complete...")
+    time.sleep(10)
+
     # Step 1: Check for unprocessed items
     unprocessed = find_unprocessed_items()
 

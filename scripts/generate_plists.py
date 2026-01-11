@@ -116,9 +116,19 @@ INBOX_PROCESSOR_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
     <key>WorkingDirectory</key>
     <string>{vault_path}</string>
 
-    <!-- Run every {processor_interval} seconds -->
+    <!-- Watch Inbox for changes (new files, modifications) -->
+    <key>WatchPaths</key>
+    <array>
+        <string>{inbox_path}</string>
+    </array>
+
+    <!-- Prevent running more than once per 10 seconds (batches rapid changes) -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <!-- Fallback: also run periodically in case WatchPaths misses something -->
     <key>StartInterval</key>
-    <integer>{processor_interval}</integer>
+    <integer>1800</integer>
 
     <!-- Also run immediately when loaded -->
     <key>RunAtLoad</key>
@@ -248,6 +258,7 @@ def main():
     state_dir = expand_path(config['paths']['state_dir'])
     automator_app = expand_path(config['paths']['automator_app'])
     vault_path = expand_path(config['paths']['vault'])
+    inbox_path = str(Path(vault_path) / config['paths']['inbox'])
     claude_executable = expand_path(config['claude']['executable'])
     claude_dir = str(Path(claude_executable).parent)
     home = config['user']['home']
@@ -256,6 +267,7 @@ def main():
     values = {
         'repo_dir': str(repo_dir),
         'vault_path': vault_path,
+        'inbox_path': inbox_path,
         'state_dir': state_dir,
         'automator_app': automator_app,
         'claude_executable': claude_executable,
