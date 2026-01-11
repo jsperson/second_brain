@@ -268,6 +268,25 @@ After changing folder paths:
 3. For fallback fixes: check there's a recent entry in Inbox-Log.md to fix
 4. Verify capture script detected the fix command (check logs)
 
+### Claude Code login keeps expiring
+
+If scheduled jobs (daily-digest, inbox-processor) fail because Claude Code authentication expires:
+
+1. **Set up a long-lived token** (requires Claude Pro or Max subscription):
+   ```bash
+   claude setup-token
+   ```
+   This generates a persistent OAuth token stored in `~/.claude/.credentials.json`.
+
+2. **Verify it works**:
+   ```bash
+   claude --print "test"
+   ```
+
+3. **Ensure no API key override**: If you have `ANTHROPIC_API_KEY` set in your environment, Claude Code will use API billing instead of your subscription. Remove it if you want to use your subscription.
+
+The long-lived token will keep your scheduled jobs authenticated without requiring browser-based re-login.
+
 ## Credits
 
 Based on the [Second Brain Build Guide](https://natesnewsletter.substack.com/p/bridge-the-ai-implementation-gap) by [Nate B. Jones](https://natesnewsletter.substack.com/).
