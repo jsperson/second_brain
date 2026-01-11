@@ -68,7 +68,7 @@ IMESSAGE_CAPTURE_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.jsperson.imessage-capture</string>
+    <string>com.secondbrain.imessage-capture</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -105,7 +105,7 @@ INBOX_PROCESSOR_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.jsperson.inbox-processor</string>
+    <string>com.secondbrain.inbox-processor</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -157,7 +157,7 @@ DAILY_DIGEST_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.jsperson.daily-digest</string>
+    <string>com.secondbrain.daily-digest</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -202,7 +202,7 @@ WEEKLY_REVIEW_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.jsperson.weekly-review</string>
+    <string>com.secondbrain.weekly-review</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -284,10 +284,10 @@ def main():
 
     # Generate plists
     plists = [
-        ('com.jsperson.imessage-capture.plist', IMESSAGE_CAPTURE_TEMPLATE),
-        ('com.jsperson.inbox-processor.plist', INBOX_PROCESSOR_TEMPLATE),
-        ('com.jsperson.daily-digest.plist', DAILY_DIGEST_TEMPLATE),
-        ('com.jsperson.weekly-review.plist', WEEKLY_REVIEW_TEMPLATE),
+        ('com.secondbrain.imessage-capture.plist', IMESSAGE_CAPTURE_TEMPLATE),
+        ('com.secondbrain.inbox-processor.plist', INBOX_PROCESSOR_TEMPLATE),
+        ('com.secondbrain.daily-digest.plist', DAILY_DIGEST_TEMPLATE),
+        ('com.secondbrain.weekly-review.plist', WEEKLY_REVIEW_TEMPLATE),
     ]
 
     for filename, template in plists:
@@ -299,7 +299,7 @@ def main():
     print(f"\nPlists generated in {script_dir}")
     print("\nTo install, run:")
     print("  cp scripts/*.plist ~/Library/LaunchAgents/")
-    print("  launchctl load ~/Library/LaunchAgents/com.jsperson.*.plist")
+    print("  launchctl load ~/Library/LaunchAgents/com.secondbrain.*.plist")
 
 
 if __name__ == "__main__":

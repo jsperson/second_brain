@@ -106,10 +106,10 @@ The capture script needs Full Disk Access to read Messages database. We use an A
 
 ```bash
 # Copy plist to LaunchAgents
-cp ~/source/second_brain/scripts/com.jsperson.imessage-capture.plist ~/Library/LaunchAgents/
+cp ~/source/second_brain/scripts/com.secondbrain.imessage-capture.plist ~/Library/LaunchAgents/
 
 # Load the job
-launchctl load ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist
+launchctl load ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist
 
 # Verify it's running
 launchctl list | grep imessage-capture
@@ -166,8 +166,8 @@ The feedback feature sends iMessages via AppleScript. The first time it runs, ma
 ### 4.2 Install Processor Launchd Job
 
 ```bash
-cp ~/source/second_brain/scripts/com.jsperson.inbox-processor.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.jsperson.inbox-processor.plist
+cp ~/source/second_brain/scripts/com.secondbrain.inbox-processor.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.secondbrain.inbox-processor.plist
 ```
 
 ### 4.3 Verify
@@ -189,8 +189,8 @@ No unprocessed items in Inbox. Skipping Claude.
 Runs at 7:00 AM daily:
 
 ```bash
-cp ~/source/second_brain/scripts/com.jsperson.daily-digest.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.jsperson.daily-digest.plist
+cp ~/source/second_brain/scripts/com.secondbrain.daily-digest.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.secondbrain.daily-digest.plist
 ```
 
 ### 5.2 Weekly Review
@@ -198,8 +198,8 @@ launchctl load ~/Library/LaunchAgents/com.jsperson.daily-digest.plist
 Runs Sunday at 4:00 PM:
 
 ```bash
-cp ~/source/second_brain/scripts/com.jsperson.weekly-review.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.jsperson.weekly-review.plist
+cp ~/source/second_brain/scripts/com.secondbrain.weekly-review.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.secondbrain.weekly-review.plist
 ```
 
 ## Part 6: Migration from claude_life
@@ -209,7 +209,7 @@ If you have an existing installation in `~/source/claude_life/scripts/`:
 ### 6.1 Stop Existing Jobs
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist
+launchctl unload ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist
 ```
 
 ### 6.2 Update Automator App
@@ -224,8 +224,8 @@ launchctl unload ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist
 ### 6.3 Install New Plist
 
 ```bash
-cp ~/source/second_brain/scripts/com.jsperson.imessage-capture.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist
+cp ~/source/second_brain/scripts/com.secondbrain.imessage-capture.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist
 ```
 
 ### 6.4 Verify Migration
@@ -279,13 +279,13 @@ To remove Second Brain automation:
 
 ```bash
 # Stop all jobs
-launchctl unload ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist
-launchctl unload ~/Library/LaunchAgents/com.jsperson.inbox-processor.plist
-launchctl unload ~/Library/LaunchAgents/com.jsperson.daily-digest.plist
-launchctl unload ~/Library/LaunchAgents/com.jsperson.weekly-review.plist
+launchctl unload ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist
+launchctl unload ~/Library/LaunchAgents/com.secondbrain.inbox-processor.plist
+launchctl unload ~/Library/LaunchAgents/com.secondbrain.daily-digest.plist
+launchctl unload ~/Library/LaunchAgents/com.secondbrain.weekly-review.plist
 
 # Remove plists
-rm ~/Library/LaunchAgents/com.jsperson.*.plist
+rm ~/Library/LaunchAgents/com.secondbrain.*.plist
 
 # Remove Automator app
 rm -rf ~/Applications/iMessageCapture.app

@@ -21,3 +21,7 @@ venv/
 
 # Logs (these are in ~/.imessage-capture/, not in repo)
 *.log
+
+# Generated plist files (contain user-specific paths)
+# Run `python scripts/generate_plists.py` to create your own
+scripts/*.plist

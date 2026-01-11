@@ -237,7 +237,7 @@ categories:
 After changing folder paths:
 1. Create the folders in your vault if they don't exist
 2. Run `python3 scripts/generate_plists.py` to regenerate plists
-3. Reload the capture job: `launchctl unload ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist && launchctl load ~/Library/LaunchAgents/com.jsperson.imessage-capture.plist`
+3. Reload the capture job: `launchctl unload ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist && launchctl load ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist`
 
 ## Troubleshooting
 
