@@ -14,7 +14,7 @@
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/jsperson/Library/Mobile Documents/iCloud~md~obsidian/Documents/scott</string>
+    <string>/Users/jsperson/source/second_brain</string>
 
     <!-- Run at 7:00 every day -->
     <key>StartCalendarInterval</key>

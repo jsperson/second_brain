@@ -168,7 +168,7 @@ DAILY_DIGEST_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>{vault_path}</string>
+    <string>{repo_dir}</string>
 
     <!-- Run at {digest_hour}:{digest_minute:02d} every day -->
     <key>StartCalendarInterval</key>
@@ -213,7 +213,7 @@ WEEKLY_REVIEW_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>{vault_path}</string>
+    <string>{repo_dir}</string>
 
     <!-- Run at {review_hour}:{review_minute:02d} on weekday {review_weekday} (0=Sunday) -->
     <key>StartCalendarInterval</key>
