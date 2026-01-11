@@ -152,6 +152,7 @@ Users can add custom categories or override defaults in `config.local.yaml`.
 
 ## Classification Guidelines
 
+- **Everything in Inbox is a genuine capture**: Fix/correction commands are handled upstream by the capture script (based on iMessage reply threading) and are stored separately as `type: fix_command`. Any file with `type: capture` in the Inbox is content to be classified, not a command.
 - **Read config.yaml** to get current categories and their descriptions
 - **Match content to descriptions**: Use each category's `description` field to decide where content belongs
 - **Look for explicit signals**: Keywords, names, dates, action items
