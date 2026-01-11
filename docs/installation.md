@@ -315,6 +315,46 @@ Full Disk Access not granted to the Automator app. See Part 2.2.
 3. Test manually: `osascript -e 'tell application "Messages" to activate'`
 4. Check logs: `tail ~/.imessage-capture/inbox-processor-error.log`
 
+## Upgrade
+
+After pulling new code from the repository, run the upgrade script:
+
+```bash
+git pull
+python3 scripts/upgrade.py
+```
+
+The upgrade script will:
+1. Show new config options (if any)
+2. Regenerate launchd plists
+3. Reinstall and reload all jobs
+4. Update Claude commands
+5. Run diagnostics
+
+### Manual Upgrade
+
+If you prefer to upgrade manually:
+
+```bash
+# Pull latest code
+git pull
+
+# Regenerate plists
+python3 scripts/generate_plists.py
+
+# Reinstall plists (for each job)
+launchctl unload ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist
+cp scripts/com.secondbrain.imessage-capture.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.secondbrain.imessage-capture.plist
+# Repeat for other jobs...
+
+# Update commands
+cp commands/*.md ~/.claude/commands/
+
+# Verify
+python3 scripts/diagnose.py
+```
+
 ## Uninstall
 
 ### Using the Uninstall Script (Recommended)

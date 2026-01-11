@@ -9,8 +9,28 @@ Usage:
 
 import os
 import subprocess
-import yaml
+import sys
 from pathlib import Path
+
+# =============================================================================
+# Dependency Check
+# =============================================================================
+
+def check_dependencies():
+    """Check required Python packages are installed."""
+    try:
+        __import__('yaml')
+        return True
+    except ImportError:
+        print("Missing required package: pyyaml")
+        print("\nInstall with: pip3 install pyyaml")
+        print("Or run: python3 scripts/setup.py")
+        return False
+
+if not check_dependencies():
+    sys.exit(1)
+
+import yaml
 
 # =============================================================================
 # Constants

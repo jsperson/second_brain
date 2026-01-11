@@ -123,6 +123,7 @@ second_brain/
 ├── config.local.yaml      # Your personal overrides (gitignored)
 ├── scripts/
 │   ├── setup.py                  # Interactive setup wizard
+│   ├── upgrade.py                # Upgrade after git pull
 │   ├── diagnose.py               # Diagnostic tool
 │   ├── uninstall.py              # Clean uninstall (preserves data)
 │   ├── imessage_capture.py       # Capture iMessages to Inbox
@@ -188,6 +189,17 @@ python3 scripts/diagnose.py
 ### Manual Installation
 
 For step-by-step manual installation, see [docs/installation.md](docs/installation.md).
+
+### Upgrade
+
+After pulling new code from the repository:
+
+```bash
+git pull
+python3 scripts/upgrade.py
+```
+
+This regenerates plists, reinstalls jobs, updates commands, and runs diagnostics.
 
 ### Uninstall
 

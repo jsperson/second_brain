@@ -12,8 +12,60 @@ import re
 import sys
 import shutil
 import subprocess
-import yaml
 from pathlib import Path
+
+# =============================================================================
+# Dependency Check
+# =============================================================================
+
+REQUIRED_PACKAGES = {
+    'yaml': 'pyyaml',  # import name -> pip package name
+}
+
+def check_dependencies():
+    """Check and install required Python packages."""
+    missing = []
+
+    for import_name, pip_name in REQUIRED_PACKAGES.items():
+        try:
+            __import__(import_name)
+        except ImportError:
+            missing.append((import_name, pip_name))
+
+    if not missing:
+        return True
+
+    print("Missing required Python packages:")
+    for import_name, pip_name in missing:
+        print(f"  - {pip_name}")
+
+    response = input("\nInstall them now? [Y/n]: ").strip().lower()
+    if response in ('', 'y', 'yes'):
+        for import_name, pip_name in missing:
+            print(f"Installing {pip_name}...")
+            result = subprocess.run(
+                [sys.executable, '-m', 'pip', 'install', pip_name],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                print(f"Error installing {pip_name}: {result.stderr}")
+                print(f"\nPlease install manually: pip3 install {pip_name}")
+                return False
+            print(f"  Installed {pip_name}")
+        return True
+    else:
+        print(f"\nPlease install manually:")
+        for _, pip_name in missing:
+            print(f"  pip3 install {pip_name}")
+        return False
+
+# Check dependencies before proceeding
+if not check_dependencies():
+    sys.exit(1)
+
+# Now safe to import yaml
+import yaml
 
 # =============================================================================
 # Constants
