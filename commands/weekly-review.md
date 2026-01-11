@@ -35,7 +35,7 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - Note patterns in task types
 
 4. **Generate Review**
-   - Create file: `Reports/Weekly-Review-{YYYYMMDD}.md`
+   - Create file: `Second Brain/Reports/Weekly-Review-{YYYYMMDD}.md` (relative to vault root)
    - Use the format below
    - Keep it analytical and actionable (under 250 words body)
 

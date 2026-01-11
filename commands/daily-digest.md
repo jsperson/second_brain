@@ -33,7 +33,7 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
    - Identify any pending follow-ups
 
 4. **Generate Digest**
-   - Create file: `Reports/Daily-Digest-{YYYYMMDD}.md`
+   - Create file: `Second Brain/Reports/Daily-Digest-{YYYYMMDD}.md` (relative to vault root)
    - Use the format below
    - Keep it concise (under 150 words in the body)
 
