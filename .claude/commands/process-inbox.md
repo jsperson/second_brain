@@ -70,26 +70,80 @@ Users can add custom categories or override defaults in `config.local.yaml`.
    - This keeps the Inbox clean while preserving the original for reference
    - Skip this step for `needs_review` items (they stay in Inbox)
 
-6. **Update frontmatter** of processed file:
+6. **Update frontmatter** of processed file with structured fields:
+
+   **All categories get these base fields:**
    ```yaml
    processed: true
    classified_as: {category}
    destination: {destination_path}
-   classified_at: {ISO timestamp}
+   classified_at: {ISO timestamp in local timezone}
+   confidence: {0.0-1.0 score}
    ```
+
+   **Plus category-specific fields:**
+
+   **People:**
+   ```yaml
+   type: person
+   name: {Person's full name}
+   context: {How you know them, their role}
+   follow_ups: {Things to remember for next conversation}
+   tags: [work, friend, family, etc.]
+   ```
+
+   **Projects:**
+   ```yaml
+   type: project
+   name: {Project name}
+   status: active  # or: waiting, blocked, someday
+   next_action: {Specific actionable next step}
+   tags: [relevant tags]
+   ```
+
+   **Ideas:**
+   ```yaml
+   type: idea
+   name: {Idea title}
+   one_liner: {Core insight in one sentence}
+   tags: [relevant tags]
+   ```
+
+   **Admin:**
+   ```yaml
+   type: task
+   name: {Task name}
+   due_date: {YYYY-MM-DD if mentioned, null otherwise}
+   status: todo
+   tags: [relevant tags]
+   ```
+
+   **Confidence scoring:**
+   - 0.9-1.0: Very clear, obvious classification
+   - 0.7-0.89: Fairly confident, good match
+   - 0.5-0.69: Uncertain, could fit multiple categories
+   - Below 0.5: Use `needs_review` instead
 
 7. **Append to Inbox-Log.md**:
    - If log doesn't exist, create it with header
-   - Add entry under today's date section
+   - Add entry under today's date section (YYYYMMDD format)
+   - **Use local timezone** for Time column (same timezone as date header)
+   - **Insert in chronological order** - entries sorted by time ascending within each day
+   - **Use Obsidian wiki-links** for Destination column
 
    Log format:
    ```markdown
    ## YYYYMMDD
 
-   | Time | Original | Filed To | Destination | Status |
-   |------|----------|----------|-------------|--------|
-   | HH:MM | First 50 chars... | category | relative/path | Filed |
+   | Time | Original | Filed To | Destination | Confidence | Status |
+   |------|----------|----------|-------------|------------|--------|
+   | HH:MM | First 50 chars... | category | [[Second Brain/Projects/Name]] | 0.92 | Filed |
    ```
+
+   **Status values:**
+   - `Filed` - Successfully routed to destination
+   - `Fixed` - Reclassified via fix command
+   - `Needs Review` - Unclear, awaiting user input
 
 8. **Report summary** when done:
    - Number of items processed

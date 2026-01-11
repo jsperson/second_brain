@@ -108,3 +108,5 @@ claude:
 # for clarification. User can reply to classify the original capture.
 feedback:
   enabled: true
+  # Send confirmation iMessage when items are successfully filed
+  confirmations: true

@@ -124,14 +124,17 @@ def parse_new_log_entries(start_line):
 
     destinations = []
 
-    # Pattern to match table rows: | Time | Original | Filed To | Destination | Status |
+    # Pattern to match table rows (handles both old and new formats):
+    # Old: | Time | Original | Filed To | Destination | Status |
+    # New: | Time | Original | Filed To | Destination | Confidence | Status |
     # We want rows where Status is Filed, Fixed, or Reclassified
     # and Destination is a real path (not containing "(kept)")
     table_pattern = re.compile(
-        r'^\|\s*[\d:]+\s*\|'  # Time column
-        r'[^|]+\|'            # Original column
-        r'[^|]+\|'            # Filed To column
-        r'\s*([^|]+?)\s*\|'   # Destination column (capture group)
+        r'^\|\s*[\d:]+\s*\|'              # Time column
+        r'[^|]+\|'                         # Original column
+        r'[^|]+\|'                         # Filed To column
+        r'\s*([^|]+?)\s*\|'                # Destination column (capture group)
+        r'(?:\s*[\d.]+\s*\|)?'             # Confidence column (optional)
         r'\s*(Filed|Fixed|Reclassified)\s*\|'  # Status column
     )
 
@@ -141,6 +144,9 @@ def parse_new_log_entries(start_line):
             destination = match.group(1).strip()
             # Skip entries that stayed in inbox
             if '(kept)' not in destination and destination:
+                # Handle Obsidian wiki-link format [[path]]
+                if destination.startswith('[[') and destination.endswith(']]'):
+                    destination = destination[2:-2]
                 destinations.append(destination)
 
     return destinations
@@ -376,6 +382,63 @@ def send_feedback_messages():
     return sent_count
 
 
+def send_confirmation_messages(start_line):
+    """Send confirmation iMessages for successfully filed items."""
+    feedback_config = CONFIG.get('feedback', {})
+    if not feedback_config.get('confirmations', True):
+        print("Confirmations disabled in config.")
+        return 0
+
+    handles = CONFIG.get('handles', [])
+    if not handles:
+        print("No handles configured for confirmations.")
+        return 0
+
+    recipient = handles[0]
+
+    # Parse new log entries to find successfully filed items
+    if not INBOX_LOG_PATH.exists():
+        return 0
+
+    lines = INBOX_LOG_PATH.read_text(encoding='utf-8').splitlines()
+    new_lines = lines[start_line:]
+
+    # Pattern to match table rows (handles both old and new formats):
+    # Old: | Time | Original | Filed To | Destination | Status |
+    # New: | Time | Original | Filed To | Destination | Confidence | Status |
+    table_pattern = re.compile(
+        r'^\|\s*([\d:]+)\s*\|'         # Time column (capture)
+        r'\s*([^|]+?)\s*\|'             # Original column (capture)
+        r'\s*([^|]+?)\s*\|'             # Filed To column (capture)
+        r'\s*([^|]+?)\s*\|'             # Destination column (capture)
+        r'(?:\s*[\d.]+\s*\|)?'          # Confidence column (optional, non-capture)
+        r'\s*(Filed)\s*\|'              # Status column - only "Filed" status
+    )
+
+    sent_count = 0
+
+    for line in new_lines:
+        match = table_pattern.match(line)
+        if match:
+            original = match.group(2).strip()
+            category = match.group(3).strip()
+
+            # Send confirmation message
+            # Format: [SB] ✓ category: "preview..."
+            preview = original[:40]
+            if len(original) > 40:
+                preview += "..."
+            message = f'[SB] ✓ {category}: "{preview}"'
+
+            if send_imessage(recipient, message):
+                sent_count += 1
+                print(f"  Confirmed: {message}")
+            else:
+                print(f"  Failed to send confirmation for: {original[:30]}...")
+
+    return sent_count
+
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -404,9 +467,9 @@ def main():
         # Step 2: Run Claude to process
         run_claude_processor()
 
-        # Step 3: Strip metadata from newly-filed notes
-        stripped = strip_metadata_from_new_files(log_start_line)
-        print(f"Stripped metadata from {stripped} file(s).")
+        # Step 3: Send confirmation messages for successfully filed items
+        confirmed = send_confirmation_messages(log_start_line)
+        print(f"Sent {confirmed} confirmation message(s).")
 
     # Step 4: Send feedback for needs_review items
     # (Run this even if no unprocessed items - there might be items from a previous run)
