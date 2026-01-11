@@ -46,11 +46,13 @@ Read `~/source/second_brain/config.yaml` (and `config.local.yaml` if it exists) 
 
 6. **Send Notification (REQUIRED)**
    - Get recipient from config: `handles[0]`
+   - Get vault name from config: last component of `paths.vault` (e.g., "/path/to/scott" → "scott")
    - **Execute this bash command** to send iMessage notification:
    ```bash
-   osascript -e 'tell application "Messages" to send "[SB] Weekly review ready: obsidian://open?vault=Second%20Brain&file=Second%20Brain%2FReports%2FWeekly-Review-{YYYYMMDD}" to participant "{recipient}" of account id (id of 1st account whose service type = iMessage)'
+   osascript -e 'tell application "Messages" to send "[SB] Weekly review ready: obsidian://open?vault={vault_name}&file=Second%20Brain%2FReports%2FWeekly-Review-{YYYYMMDD}" to participant "{recipient}" of account id (id of 1st account whose service type = iMessage)'
    ```
-   - Replace `{YYYYMMDD}` with today's date and `{recipient}` with the handle from config
+   - Replace `{vault_name}` with the vault name, `{YYYYMMDD}` with today's date, `{recipient}` with the handle
+   - URL-encode the vault name if it contains spaces
    - The `[SB]` prefix prevents this message from being captured as an inbox item
 
 ## Output Format
