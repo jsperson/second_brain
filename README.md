@@ -1,5 +1,7 @@
 # Second Brain
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A personal knowledge management system that captures thoughts via iMessage and automatically classifies and routes them to Obsidian.
 
 ## Overview
