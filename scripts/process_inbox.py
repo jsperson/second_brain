@@ -103,118 +103,6 @@ def parse_frontmatter(content):
 
 
 # =============================================================================
-# Metadata Stripping
-# =============================================================================
-
-def get_log_line_count():
-    """Get the current line count of the Inbox-Log.md file."""
-    if not INBOX_LOG_PATH.exists():
-        return 0
-    return len(INBOX_LOG_PATH.read_text(encoding='utf-8').splitlines())
-
-
-def parse_new_log_entries(start_line):
-    """
-    Parse new log entries added after start_line.
-
-    Returns list of destination paths for successfully filed items.
-    """
-    if not INBOX_LOG_PATH.exists():
-        return []
-
-    lines = INBOX_LOG_PATH.read_text(encoding='utf-8').splitlines()
-    new_lines = lines[start_line:]
-
-    destinations = []
-
-    # Pattern to match table rows (handles both old and new formats):
-    # Old: | Time | Original | Filed To | Destination | Status |
-    # New: | Time | Original | Filed To | Destination | Confidence | Status |
-    # We want rows where Status is Filed, Fixed, or Reclassified
-    # and Destination is a real path (not containing "(kept)")
-    table_pattern = re.compile(
-        r'^\|\s*[\d:]+\s*\|'              # Time column
-        r'[^|]+\|'                         # Original column
-        r'[^|]+\|'                         # Filed To column
-        r'\s*([^|]+?)\s*\|'                # Destination column (capture group)
-        r'(?:\s*[\d.]+\s*\|)?'             # Confidence column (optional)
-        r'\s*(Filed|Fixed|Reclassified)\s*\|'  # Status column
-    )
-
-    for line in new_lines:
-        match = table_pattern.match(line)
-        if match:
-            destination = match.group(1).strip()
-            # Skip entries that stayed in inbox
-            if '(kept)' not in destination and destination:
-                # Handle Obsidian wiki-link format [[path]]
-                if destination.startswith('[[') and destination.endswith(']]'):
-                    destination = destination[2:-2]
-                destinations.append(destination)
-
-    return destinations
-
-
-def strip_file_metadata(filepath):
-    """
-    Strip processing metadata from a filed note, keeping only the content.
-
-    Removes all frontmatter, leaving just the note body.
-    """
-    if not filepath.exists():
-        print(f"  Warning: File not found: {filepath}")
-        return False
-
-    try:
-        content = filepath.read_text(encoding='utf-8')
-        _, body = parse_frontmatter(content)
-
-        # Write back just the body content
-        filepath.write_text(body.strip() + '\n', encoding='utf-8')
-        return True
-    except Exception as e:
-        print(f"  Error stripping metadata from {filepath}: {e}")
-        return False
-
-
-def strip_metadata_from_new_files(start_line):
-    """
-    Strip metadata from files that were just moved by Claude.
-
-    Uses the Inbox-Log.md to identify which files were processed.
-    """
-    destinations = parse_new_log_entries(start_line)
-
-    if not destinations:
-        print("No new files to strip metadata from.")
-        return 0
-
-    print(f"Stripping metadata from {len(destinations)} file(s)...")
-    stripped_count = 0
-
-    for dest in destinations:
-        # Destination is relative to vault, e.g. "Second Brain/People/Name.md"
-        filepath = VAULT_PATH.parent / dest  # Go up from "Second Brain" to get full path
-
-        # Actually the vault path is already the full path to the vault
-        # and destinations start with "Second Brain/", so we need to handle this
-        # Let's check if destination starts with vault folder name
-        vault_name = VAULT_PATH.name  # "Second Brain"
-        if dest.startswith(vault_name + "/"):
-            # Strip the vault name prefix
-            relative_path = dest[len(vault_name) + 1:]
-            filepath = VAULT_PATH / relative_path
-        else:
-            filepath = VAULT_PATH / dest
-
-        print(f"  Stripping: {filepath.name}")
-        if strip_file_metadata(filepath):
-            stripped_count += 1
-
-    return stripped_count
-
-
-# =============================================================================
 # Inbox Checking
 # =============================================================================
 
@@ -260,41 +148,416 @@ def find_needs_review_items():
 
 
 # =============================================================================
-# Claude Invocation
+# Claude Classification
 # =============================================================================
 
-def run_claude_processor():
-    """Invoke Claude to process inbox items."""
-    print("Invoking Claude process-inbox...")
+def build_classification_prompt(text_content):
+    """Build classification prompt dynamically from config categories."""
+    categories = CONFIG.get('categories', {})
 
-    # Read command file directly instead of relying on skill discovery
-    if not PROCESS_INBOX_COMMAND.exists():
-        print(f"Error: Command file not found: {PROCESS_INBOX_COMMAND}")
-        return False
+    category_list = "\n".join([
+        f"- {name}: {cat.get('description', name)}"
+        for name, cat in categories.items()
+    ])
 
-    command_content = PROCESS_INBOX_COMMAND.read_text()
+    category_names = ", ".join(categories.keys())
+
+    return f"""Classify this text for a personal knowledge management system.
+
+TEXT:
+{text_content}
+
+CATEGORIES:
+{category_list}
+
+Return ONLY valid JSON (no markdown, no explanation):
+
+{{
+  "category": "<one of: {category_names}, or needs_review>",
+  "confidence": 0.85,
+  "name": "Descriptive title for the item",
+  "tags": ["relevant", "tags"]
+}}
+
+RULES:
+- Confidence 0.9-1.0: Very clear classification
+- Confidence 0.7-0.89: Fairly confident
+- Confidence below 0.6: Use "needs_review"
+- Extract dates mentioned and include in name if relevant
+- For needs_review, add "reason" field explaining uncertainty
+- Return ONLY the JSON object, no other text"""
+
+
+def classify_with_claude(text_content):
+    """Send text to Claude, get classification JSON back."""
+    prompt = build_classification_prompt(text_content)
 
     try:
         result = subprocess.run(
-            [CLAUDE_EXECUTABLE, '--print', '--dangerously-skip-permissions', command_content],
-            cwd=str(VAULT_PATH),
+            [CLAUDE_EXECUTABLE, '--print', prompt],
             capture_output=True,
             text=True,
-            timeout=300  # 5 minute timeout
+            timeout=60
         )
 
-        if result.stdout:
-            print(result.stdout)
-        if result.stderr:
-            print(f"Claude stderr: {result.stderr}")
+        if result.returncode != 0:
+            print(f"Claude error: {result.stderr}")
+            return None
 
-        return result.returncode == 0
+        return parse_classification_response(result.stdout)
+
     except subprocess.TimeoutExpired:
-        print("Error: Claude timed out after 5 minutes")
-        return False
+        print("Error: Claude classification timed out")
+        return None
     except Exception as e:
-        print(f"Error running Claude: {e}")
-        return False
+        print(f"Error calling Claude: {e}")
+        return None
+
+
+def parse_classification_response(response_text):
+    """Parse JSON classification from Claude's response."""
+    import json
+
+    # Clean up response - remove markdown code blocks if present
+    text = response_text.strip()
+    if text.startswith('```'):
+        # Remove markdown code fence
+        lines = text.split('\n')
+        if lines[0].startswith('```'):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == '```':
+            lines = lines[:-1]
+        text = '\n'.join(lines)
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing Claude response as JSON: {e}")
+        print(f"Response was: {response_text[:200]}...")
+        return None
+
+
+# =============================================================================
+# File Operations
+# =============================================================================
+
+def get_category_path(category):
+    """Get destination path for a category from config."""
+    cat_config = CONFIG.get('categories', {}).get(category, {})
+    if isinstance(cat_config, str):
+        return cat_config
+    return cat_config.get('path', f"Second Brain/{category.title()}")
+
+
+def sanitize_filename(name):
+    """Create a safe filename from a name."""
+    # Remove unsafe characters
+    safe = re.sub(r'[<>:"/\\|?*]', '', name)
+    # Replace spaces with hyphens
+    safe = re.sub(r'\s+', '-', safe)
+    # Limit length
+    return safe[:50].strip('-')
+
+
+def get_destination_path(category, name):
+    """Get full destination path for a classified item."""
+    category_path = get_category_path(category)
+    safe_name = sanitize_filename(name)
+    return VAULT_PATH / category_path / f"{safe_name}.md"
+
+
+def write_file_with_frontmatter(filepath, frontmatter, body):
+    """Write a markdown file with YAML frontmatter."""
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
+    content = "---\n"
+    content += yaml.dump(frontmatter, default_flow_style=False, allow_unicode=True)
+    content += "---\n\n"
+    content += body
+
+    filepath.write_text(content, encoding='utf-8')
+
+
+def file_to_destination(filepath, frontmatter, body, classification):
+    """Move file to destination, update frontmatter, archive original."""
+    import shutil
+
+    category = classification['category']
+    name = classification.get('name', 'Untitled')
+    dest_path = get_destination_path(category, name)
+
+    # Check if destination exists, add number if so
+    if dest_path.exists():
+        base = dest_path.stem
+        suffix = 1
+        while dest_path.exists():
+            dest_path = dest_path.with_name(f"{base}-{suffix}.md")
+            suffix += 1
+
+    # Update frontmatter with classification results (for archival copy)
+    frontmatter.update({
+        'processed': True,
+        'classified_as': category,
+        'destination': str(dest_path.relative_to(VAULT_PATH)),
+        'classified_at': datetime.now().astimezone().isoformat(),
+        'confidence': classification.get('confidence', 0.0),
+        'name': name,
+    })
+
+    # Add tags if present
+    if classification.get('tags'):
+        frontmatter['tags'] = classification['tags']
+
+    # Write clean body to destination (no frontmatter clutter)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    dest_path.write_text(body.strip() + '\n', encoding='utf-8')
+    print(f"  Filed to: {dest_path.relative_to(VAULT_PATH)}")
+
+    # Archive original with full metadata to Processed folder
+    processed_dir = INBOX_PATH / 'Processed'
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    archive_path = processed_dir / filepath.name
+
+    # Update the original file's frontmatter before archiving
+    write_file_with_frontmatter(filepath, frontmatter, body)
+    shutil.move(str(filepath), str(archive_path))
+
+    return dest_path
+
+
+def mark_needs_review(filepath, frontmatter, classification):
+    """Mark a file as needing review (stays in Inbox)."""
+    frontmatter.update({
+        'needs_review': True,
+        'classified_at': datetime.now().astimezone().isoformat(),
+        'confidence': classification.get('confidence', 0.0),
+    })
+
+    if classification.get('reason'):
+        frontmatter['review_reason'] = classification['reason']
+
+    content = filepath.read_text(encoding='utf-8')
+    _, body = parse_frontmatter(content)
+    write_file_with_frontmatter(filepath, frontmatter, body)
+    print(f"  Marked for review: {filepath.name}")
+
+
+def process_capture(filepath):
+    """Process a single capture file."""
+    content = filepath.read_text(encoding='utf-8')
+    frontmatter, body = parse_frontmatter(content)
+
+    if not body.strip():
+        print(f"  Skipping empty file: {filepath.name}")
+        return None
+
+    print(f"  Classifying: {filepath.name}")
+
+    # Get classification from Claude
+    classification = classify_with_claude(body)
+
+    if not classification:
+        print(f"  Classification failed for: {filepath.name}")
+        return None
+
+    category = classification.get('category', 'needs_review')
+    confidence = classification.get('confidence', 0.0)
+
+    print(f"    → {category} (confidence: {confidence:.2f})")
+
+    if category == 'needs_review' or confidence < 0.6:
+        classification['category'] = 'needs_review'
+        mark_needs_review(filepath, frontmatter, classification)
+        return {'category': 'needs_review', 'path': filepath}
+    else:
+        dest_path = file_to_destination(filepath, frontmatter, body, classification)
+        return {
+            'category': category,
+            'path': dest_path,
+            'name': classification.get('name', ''),
+            'confidence': confidence,
+            'original': body[:50]
+        }
+
+
+# =============================================================================
+# Fix Command Processing
+# =============================================================================
+
+def find_file_by_guid(guid):
+    """Find a file by its imessage_guid in Inbox or destination folders."""
+    if not guid:
+        return None
+
+    # Search in Inbox
+    for filepath in INBOX_PATH.glob('*.md'):
+        try:
+            content = filepath.read_text(encoding='utf-8')
+            frontmatter, _ = parse_frontmatter(content)
+            if frontmatter.get('imessage_guid') == guid:
+                return filepath
+        except:
+            pass
+
+    # Search in Inbox/Processed
+    processed_dir = INBOX_PATH / 'Processed'
+    if processed_dir.exists():
+        for filepath in processed_dir.glob('*.md'):
+            try:
+                content = filepath.read_text(encoding='utf-8')
+                frontmatter, _ = parse_frontmatter(content)
+                if frontmatter.get('imessage_guid') == guid:
+                    return filepath
+            except:
+                pass
+
+    # Search in destination folders
+    for category in CONFIG.get('categories', {}).keys():
+        category_path = VAULT_PATH / get_category_path(category)
+        if category_path.exists():
+            for filepath in category_path.rglob('*.md'):
+                try:
+                    content = filepath.read_text(encoding='utf-8')
+                    frontmatter, _ = parse_frontmatter(content)
+                    if frontmatter.get('imessage_guid') == guid:
+                        return filepath
+                except:
+                    pass
+
+    return None
+
+
+def process_fix_command(filepath):
+    """Handle a fix command file - reclassify the target capture."""
+    content = filepath.read_text(encoding='utf-8')
+    frontmatter, body = parse_frontmatter(content)
+
+    target_guid = frontmatter.get('reply_to_guid')
+    target_category = frontmatter.get('target_category')
+
+    print(f"  Processing fix command: {filepath.name}")
+    print(f"    Target GUID: {target_guid}")
+    print(f"    Target category: {target_category}")
+
+    if not target_category or target_category == 'unknown':
+        print(f"    Error: No valid target category specified")
+        return None
+
+    # Find target file
+    target_file = find_file_by_guid(target_guid)
+
+    if not target_file:
+        print(f"    Error: Target file not found for GUID: {target_guid}")
+        return None
+
+    print(f"    Found target: {target_file.name}")
+
+    # Read target file
+    target_content = target_file.read_text(encoding='utf-8')
+    target_frontmatter, target_body = parse_frontmatter(target_content)
+
+    # Create classification result for the new category
+    classification = {
+        'category': target_category,
+        'confidence': 1.0,  # User-specified, so full confidence
+        'name': target_frontmatter.get('name', target_body.split('\n')[0][:50]),
+        'tags': target_frontmatter.get('tags', [])
+    }
+
+    # Move to new destination
+    dest_path = file_to_destination(target_file, target_frontmatter, target_body, classification)
+
+    # Delete the fix command file
+    filepath.unlink()
+    print(f"    Fix command processed, deleted: {filepath.name}")
+
+    return {
+        'category': target_category,
+        'path': dest_path,
+        'fixed': True,
+        'original_path': target_file
+    }
+
+
+# =============================================================================
+# Inbox Log
+# =============================================================================
+
+def append_to_inbox_log(result):
+    """Append an entry to Inbox-Log.md, inserting into correct date section."""
+    if not result:
+        return
+
+    today = datetime.now().strftime('%Y%m%d')
+    time_str = datetime.now().strftime('%H:%M')
+
+    # Determine log entry values
+    category = result.get('category', 'unknown')
+    original = result.get('original', '')[:50].replace('|', '/')
+    confidence = result.get('confidence', 0.0)
+
+    if result.get('fixed'):
+        status = 'Fixed'
+        dest_str = f"[[{result['path'].relative_to(VAULT_PATH)}]]"
+    elif category == 'needs_review':
+        status = 'Needs Review'
+        dest_str = '(kept in Inbox)'
+    else:
+        status = 'Filed'
+        dest_str = f"[[{result['path'].relative_to(VAULT_PATH)}]]"
+
+    # Build log entry (match existing format without Confidence column)
+    entry = f"| {time_str} | {original}... | {category} | {dest_str} | {status} |"
+
+    # Read or create log file
+    if INBOX_LOG_PATH.exists():
+        log_content = INBOX_LOG_PATH.read_text(encoding='utf-8')
+    else:
+        log_content = "# Inbox Processing Log\n\n"
+
+    today_header = f"## {today}"
+
+    if today_header not in log_content:
+        # Insert today's section at the beginning (after title)
+        lines = log_content.split('\n')
+        new_lines = []
+        inserted = False
+
+        for i, line in enumerate(lines):
+            new_lines.append(line)
+            # Insert after the title line
+            if line.startswith('# ') and not inserted:
+                new_lines.append('')
+                new_lines.append(today_header)
+                new_lines.append('')
+                new_lines.append('| Time | Original | Filed To | Destination | Status |')
+                new_lines.append('|------|----------|----------|-------------|--------|')
+                new_lines.append(entry)
+                inserted = True
+
+        log_content = '\n'.join(new_lines)
+    else:
+        # Find the today section and insert entry after the table header
+        lines = log_content.split('\n')
+        new_lines = []
+        found_section = False
+        inserted = False
+
+        for i, line in enumerate(lines):
+            new_lines.append(line)
+
+            if line.strip() == today_header:
+                found_section = True
+                continue
+
+            # Insert after the separator row (|-----|...)
+            if found_section and not inserted and line.startswith('|') and '---' in line:
+                new_lines.append(entry)
+                inserted = True
+
+        log_content = '\n'.join(new_lines)
+
+    INBOX_LOG_PATH.write_text(log_content, encoding='utf-8')
 
 
 # =============================================================================
@@ -392,63 +655,6 @@ def send_feedback_messages():
     return sent_count
 
 
-def send_confirmation_messages(start_line):
-    """Send confirmation iMessages for successfully filed items."""
-    feedback_config = CONFIG.get('feedback', {})
-    if not feedback_config.get('confirmations', True):
-        print("Confirmations disabled in config.")
-        return 0
-
-    handles = CONFIG.get('handles', [])
-    if not handles:
-        print("No handles configured for confirmations.")
-        return 0
-
-    recipient = handles[0]
-
-    # Parse new log entries to find successfully filed items
-    if not INBOX_LOG_PATH.exists():
-        return 0
-
-    lines = INBOX_LOG_PATH.read_text(encoding='utf-8').splitlines()
-    new_lines = lines[start_line:]
-
-    # Pattern to match table rows (handles both old and new formats):
-    # Old: | Time | Original | Filed To | Destination | Status |
-    # New: | Time | Original | Filed To | Destination | Confidence | Status |
-    table_pattern = re.compile(
-        r'^\|\s*([\d:]+)\s*\|'         # Time column (capture)
-        r'\s*([^|]+?)\s*\|'             # Original column (capture)
-        r'\s*([^|]+?)\s*\|'             # Filed To column (capture)
-        r'\s*([^|]+?)\s*\|'             # Destination column (capture)
-        r'(?:\s*[\d.]+\s*\|)?'          # Confidence column (optional, non-capture)
-        r'\s*(Filed)\s*\|'              # Status column - only "Filed" status
-    )
-
-    sent_count = 0
-
-    for line in new_lines:
-        match = table_pattern.match(line)
-        if match:
-            original = match.group(2).strip()
-            category = match.group(3).strip()
-
-            # Send confirmation message
-            # Format: [SB] ✓ category: "preview..."
-            preview = original[:40]
-            if len(original) > 40:
-                preview += "..."
-            message = f'[SB] ✓ {category}: "{preview}"'
-
-            if send_imessage(recipient, message):
-                sent_count += 1
-                print(f"  Confirmed: {message}")
-            else:
-                print(f"  Failed to send confirmation for: {original[:30]}...")
-
-    return sent_count
-
-
 # =============================================================================
 # Main
 # =============================================================================
@@ -465,23 +671,75 @@ def main():
     unprocessed = find_unprocessed_items()
 
     if not unprocessed:
-        print("No unprocessed items in Inbox. Skipping Claude.")
+        print("No unprocessed items in Inbox. Skipping processing.")
     else:
         print(f"Found {len(unprocessed)} unprocessed item(s):")
         for item in unprocessed:
             print(f"  - {item.name}")
 
-        # Record log position before Claude runs
-        log_start_line = get_log_line_count()
+        # Track results for summary
+        results = {
+            'filed': [],
+            'needs_review': [],
+            'fixed': [],
+            'failed': []
+        }
 
-        # Step 2: Run Claude to process
-        run_claude_processor()
+        # Step 2: Process each file
+        for filepath in unprocessed:
+            try:
+                content = filepath.read_text(encoding='utf-8')
+                frontmatter, _ = parse_frontmatter(content)
+                file_type = frontmatter.get('type', 'capture')
 
-        # Step 3: Send confirmation messages for successfully filed items
-        confirmed = send_confirmation_messages(log_start_line)
-        print(f"Sent {confirmed} confirmation message(s).")
+                if file_type == 'fix_command':
+                    # Handle fix commands
+                    result = process_fix_command(filepath)
+                    if result:
+                        results['fixed'].append(result)
+                        append_to_inbox_log(result)
+                else:
+                    # Handle regular captures
+                    result = process_capture(filepath)
+                    if result:
+                        if result.get('category') == 'needs_review':
+                            results['needs_review'].append(result)
+                        else:
+                            results['filed'].append(result)
+                        append_to_inbox_log(result)
+                    else:
+                        results['failed'].append({'path': filepath})
 
-    # Step 4: Send feedback for needs_review items
+            except Exception as e:
+                print(f"  Error processing {filepath.name}: {e}")
+                results['failed'].append({'path': filepath, 'error': str(e)})
+
+        # Step 3: Print summary
+        print("\n--- Processing Summary ---")
+        print(f"  Filed: {len(results['filed'])}")
+        for r in results['filed']:
+            print(f"    - {r.get('name', 'Unknown')} → {r.get('category', 'unknown')}")
+        print(f"  Fixed: {len(results['fixed'])}")
+        print(f"  Needs Review: {len(results['needs_review'])}")
+        print(f"  Failed: {len(results['failed'])}")
+
+        # Step 4: Send confirmation messages for successfully filed items
+        if results['filed']:
+            handles = CONFIG.get('handles', [])
+            feedback_config = CONFIG.get('feedback', {})
+            if handles and feedback_config.get('confirmations', True):
+                recipient = handles[0]
+                confirmed = 0
+                for result in results['filed']:
+                    name = result.get('name', 'Unknown')[:40]
+                    category = result.get('category', 'unknown')
+                    message = f'[SB] ✓ {category}: "{name}"'
+                    if send_imessage(recipient, message):
+                        confirmed += 1
+                        print(f"  Confirmed: {message}")
+                print(f"Sent {confirmed} confirmation message(s).")
+
+    # Step 5: Send feedback for needs_review items
     # (Run this even if no unprocessed items - there might be items from a previous run)
     sent = send_feedback_messages()
 
