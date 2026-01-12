@@ -67,7 +67,7 @@ SCRIPT_DIR = Path(__file__).parent
 REPO_DIR = SCRIPT_DIR.parent
 VAULT_PATH = Path(expand_path(CONFIG['paths']['vault']))
 INBOX_PATH = VAULT_PATH / CONFIG['paths']['inbox']
-INBOX_LOG_PATH = VAULT_PATH / "Inbox-Log.md"
+INBOX_LOG_PATH = VAULT_PATH / CONFIG['paths']['inbox_log']
 CLAUDE_EXECUTABLE = expand_path(CONFIG['claude']['executable'])
 PROCESS_INBOX_COMMAND = REPO_DIR / '.claude' / 'commands' / 'process-inbox.md'
 
