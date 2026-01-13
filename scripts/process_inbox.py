@@ -20,6 +20,14 @@ import yaml
 from datetime import datetime
 from pathlib import Path
 
+# Import audit logging (silent failure if not available)
+try:
+    from audit_log import audit_log
+except ImportError:
+    # Fallback: no-op function if audit_log module not found
+    def audit_log(*args, **kwargs):
+        pass
+
 # =============================================================================
 # Configuration Loading
 # =============================================================================
@@ -192,6 +200,9 @@ def classify_with_claude(text_content):
     """Send text to Claude, get classification JSON back."""
     prompt = build_classification_prompt(text_content)
 
+    # Audit log: Claude invocation
+    audit_log("process_inbox", "claude_classify", text_length=len(text_content))
+
     try:
         result = subprocess.run(
             [CLAUDE_EXECUTABLE, '--print', prompt],
@@ -202,15 +213,26 @@ def classify_with_claude(text_content):
 
         if result.returncode != 0:
             print(f"Claude error: {result.stderr}")
+            audit_log("process_inbox", "claude_error", error=result.stderr[:200])
             return None
 
-        return parse_classification_response(result.stdout)
+        classification = parse_classification_response(result.stdout)
+
+        # Audit log: classification result
+        if classification:
+            audit_log("process_inbox", "classify_result",
+                      category=classification.get('category'),
+                      confidence=classification.get('confidence'))
+
+        return classification
 
     except subprocess.TimeoutExpired:
         print("Error: Claude classification timed out")
+        audit_log("process_inbox", "claude_timeout")
         return None
     except Exception as e:
         print(f"Error calling Claude: {e}")
+        audit_log("process_inbox", "claude_exception", error=str(e)[:200])
         return None
 
 
@@ -313,6 +335,11 @@ def file_to_destination(filepath, frontmatter, body, classification):
     dest_path.write_text(body.strip() + '\n', encoding='utf-8')
     print(f"  Filed to: {dest_path.relative_to(VAULT_PATH)}")
 
+    # Audit log: file write
+    audit_log("process_inbox", "file_write",
+              path=str(dest_path.relative_to(VAULT_PATH)),
+              category=category)
+
     # Archive original with full metadata to Processed folder
     processed_dir = INBOX_PATH / 'Processed'
     processed_dir.mkdir(parents=True, exist_ok=True)
@@ -321,6 +348,11 @@ def file_to_destination(filepath, frontmatter, body, classification):
     # Update the original file's frontmatter before archiving
     write_file_with_frontmatter(filepath, frontmatter, body)
     shutil.move(str(filepath), str(archive_path))
+
+    # Audit log: file archive
+    audit_log("process_inbox", "file_archive",
+              source=filepath.name,
+              destination=archive_path.name)
 
     return dest_path
 
@@ -662,6 +694,9 @@ def send_feedback_messages():
 def main():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Inbox processor starting...")
 
+    # Audit log: processor start
+    audit_log("process_inbox", "start")
+
     # Delay to ensure file writes are complete (especially with iCloud sync)
     import time
     print("Waiting 10 seconds for file sync to complete...")
@@ -670,8 +705,12 @@ def main():
     # Step 1: Check for unprocessed items
     unprocessed = find_unprocessed_items()
 
+    # Audit log: inbox scan
+    audit_log("process_inbox", "inbox_scan", file_count=len(unprocessed))
+
     if not unprocessed:
         print("No unprocessed items in Inbox. Skipping processing.")
+        audit_log("process_inbox", "complete", processed=0)
     else:
         print(f"Found {len(unprocessed)} unprocessed item(s):")
         for item in unprocessed:
@@ -744,6 +783,14 @@ def main():
     sent = send_feedback_messages()
 
     print(f"Done. Sent {sent} feedback message(s).")
+
+    # Audit log: processor complete
+    if 'results' in locals():
+        audit_log("process_inbox", "complete",
+                  filed=len(results['filed']),
+                  fixed=len(results['fixed']),
+                  needs_review=len(results['needs_review']),
+                  failed=len(results['failed']))
 
 
 if __name__ == "__main__":

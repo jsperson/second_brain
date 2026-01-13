@@ -219,6 +219,48 @@ def is_system_message(text):
     return text and text.startswith('[SB')
 
 
+def sanitize_content(text):
+    """
+    Remove potential prompt injection patterns from user input.
+
+    This provides defense-in-depth against malicious or accidental prompt injection
+    attacks that could cause Claude to execute unintended actions.
+
+    Patterns removed:
+    - Code fences that could escape context (```)
+    - Instruction-like patterns that could override system prompts
+    - Common injection attack phrases
+
+    Note: Sanitization is visible in the capture - users can see what was filtered.
+    This is intentional for transparency and debugging.
+    """
+    if not text:
+        return text
+
+    # Strip code fences that could escape Claude's context
+    # Replace with marker so user knows content was removed
+    text = re.sub(r'```[\s\S]*?```', '[code block removed for security]', text)
+    text = re.sub(r'```.*$', '[incomplete code block removed]', text, flags=re.MULTILINE)
+
+    # Remove instruction-like patterns that could hijack Claude's behavior
+    injection_patterns = [
+        (r'(?i)ignore\s+previous\s+instructions?', '[filtered: injection attempt]'),
+        (r'(?i)disregard\s+(?:all\s+)?(?:previous\s+)?(?:instructions?|prompts?)', '[filtered: injection attempt]'),
+        (r'(?i)system\s+prompt', '[filtered: system keyword]'),
+        (r'(?i)new\s+instruction', '[filtered: instruction override]'),
+        (r'(?i)override.*mode', '[filtered: mode override]'),
+        (r'---+\s*INSTRUCTION\s*---+', '[filtered: instruction marker]'),
+        (r'(?i)\[SYSTEM\]', '[filtered: system marker]'),
+        (r'(?i)\[ASSISTANT\]', '[filtered: assistant marker]'),
+        (r'(?i)you\s+are\s+now', '[filtered: identity override]'),
+    ]
+
+    for pattern, replacement in injection_patterns:
+        text = re.sub(pattern, replacement, text)
+
+    return text
+
+
 def get_fix_target_guid(thread_originator_guid):
     """
     Determine the actual target GUID for a fix command.
@@ -338,12 +380,15 @@ def write_capture(apple_ts, text, guid):
     """
     dt = apple_timestamp_to_datetime(apple_ts)
 
-    # Create filename: timestamp + snippet
+    # Sanitize content to prevent prompt injection attacks
+    sanitized_text = sanitize_content(text)
+
+    # Create filename: timestamp + snippet (use original text for filename)
     timestamp_str = dt.strftime("%Y-%m-%dT%H%M%S")
     snippet = sanitize_filename(text)
     filename = f"{timestamp_str}-{snippet}.md"
 
-    # Create markdown content with frontmatter
+    # Create markdown content with frontmatter (use sanitized text in content)
     iso_timestamp = dt.isoformat()
     content = f"""---
 captured: {iso_timestamp}
@@ -353,7 +398,7 @@ type: capture
 processed: false
 ---
 
-{text}
+{sanitized_text}
 """
 
     filepath = INBOX_PATH / filename
@@ -382,6 +427,9 @@ def write_fix_command(apple_ts, text, target_category, guid, reply_to_guid=None)
     """
     dt = apple_timestamp_to_datetime(apple_ts)
 
+    # Sanitize content to prevent prompt injection attacks
+    sanitized_text = sanitize_content(text)
+
     timestamp_str = dt.strftime("%Y-%m-%dT%H%M%S")
     filename = f"{timestamp_str}-fix-command.md"
 
@@ -401,7 +449,7 @@ target_category: {target_category}
 {reply_line}processed: false
 ---
 
-{text}
+{sanitized_text}
 """
         target_info = f"target: {target_category}"
         if reply_to_guid:
@@ -419,7 +467,7 @@ target_category: unknown
 {reply_line}processed: false
 ---
 
-{text}
+{sanitized_text}
 
 Note: Could not determine target category from text: "{text}"
 Valid categories: {', '.join(categories)}
