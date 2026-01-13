@@ -159,6 +159,33 @@ def find_needs_review_items():
 # Claude Classification
 # =============================================================================
 
+def detect_category_prefix(text_content):
+    """
+    Check if text starts with an explicit category prefix (Admin:, Projects:, etc.).
+
+    Returns tuple: (category_name or None, text_without_prefix)
+
+    Example:
+        detect_category_prefix("Admin: do something") -> ("admin", "do something")
+        detect_category_prefix("regular text") -> (None, "regular text")
+    """
+    import re
+
+    categories = CONFIG.get('categories', {})
+
+    # Check each category name (case-insensitive)
+    for category_name in categories.keys():
+        # Pattern: "Category:" or "Category :" at start of text
+        pattern = rf'^{re.escape(category_name)}\s*:\s*(.+)'
+        match = re.match(pattern, text_content, re.IGNORECASE)
+        if match:
+            remaining_text = match.group(1).strip()
+            return (category_name, remaining_text)
+
+    # No prefix found
+    return (None, text_content)
+
+
 def build_classification_prompt(text_content):
     """Build classification prompt dynamically from config categories."""
     categories = CONFIG.get('categories', {})
@@ -385,17 +412,36 @@ def process_capture(filepath):
 
     print(f"  Classifying: {filepath.name}")
 
-    # Get classification from Claude
-    classification = classify_with_claude(body)
+    # Check for explicit category prefix (Admin:, Projects:, etc.)
+    explicit_category, body_without_prefix = detect_category_prefix(body)
 
-    if not classification:
-        print(f"  Classification failed for: {filepath.name}")
-        return None
+    if explicit_category:
+        # User specified category explicitly - skip Claude classification
+        print(f"    → {explicit_category} (explicit prefix)")
+        classification = {
+            'category': explicit_category,
+            'confidence': 1.0,  # User-specified, so full confidence
+            'name': body_without_prefix.split('\n')[0][:50],  # First line as title
+            'tags': []
+        }
+        # Update body to remove prefix for cleaner storage
+        body = body_without_prefix
+    else:
+        # Get classification from Claude
+        classification = classify_with_claude(body)
 
+        if not classification:
+            print(f"  Classification failed for: {filepath.name}")
+            return None
+
+        category = classification.get('category', 'needs_review')
+        confidence = classification.get('confidence', 0.0)
+
+        print(f"    → {category} (confidence: {confidence:.2f})")
+
+    # Extract category and confidence from classification result
     category = classification.get('category', 'needs_review')
     confidence = classification.get('confidence', 0.0)
-
-    print(f"    → {category} (confidence: {confidence:.2f})")
 
     if category == 'needs_review' or confidence < 0.6:
         classification['category'] = 'needs_review'

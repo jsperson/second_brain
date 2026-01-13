@@ -226,19 +226,30 @@ def extract_message_text(text_column, attributed_body_column):
             decoded = attributed_body_column.decode('utf-8', errors='ignore')
 
             # Extract text between NSString markers
-            # The actual message text appears between # markers in the NSString section
-            # Pattern: #<TEXT># where text is the actual message content
+            # There are several patterns depending on how the message was created:
+            # 1. #<TEXT># - text between # markers
+            # 2. +F<TEXT>F or +f<TEXT>f - text between F/f markers after a +
+            # 3. +#<TEXT>.iI - text after # before .iI marker
+
             import re
+
+            # Pattern 1: #<TEXT>#
             match = re.search(r'#([^#]+?)#', decoded)
             if match:
-                # Strip any trailing control characters or markers
                 extracted = match.group(1)
-                extracted = re.sub(r'[\x00-\x1f]+.*$', '', extracted)  # Remove control chars and everything after
+                extracted = re.sub(r'[\x00-\x1f]+.*$', '', extracted)  # Remove control chars
                 extracted = extracted.strip()
-                if extracted and len(extracted) > 1:  # Must be substantial text
+                if extracted and len(extracted) > 1:
                     return extracted
 
-            # Alternative pattern: NSMutableString may have different markers
+            # Pattern 2: +F<TEXT> or +f<TEXT> (text after +F, before next control char)
+            match = re.search(r'\+[Ff]([^\x00-\x1f]+)', decoded)
+            if match:
+                extracted = match.group(1).strip()
+                if extracted and len(extracted) > 1:
+                    return extracted
+
+            # Pattern 3: Alternative NSMutableString format
             match = re.search(r'NSString\+[^A-Za-z]*([A-Z][^i\x00-\x1f]+?)(?:iI|NS)', decoded)
             if match:
                 extracted = match.group(1).strip()
