@@ -163,14 +163,16 @@ def fetch_new_messages(since_ts=None):
 
     if since_ts:
         query = f"""
-            SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.thread_originator_guid
+            SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.thread_originator_guid, m.attributedBody
             FROM message m
             JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
             JOIN chat c ON cmj.chat_id = c.ROWID
             WHERE c.chat_identifier IN ({placeholders})
               AND m.date > ?
-              AND m.text IS NOT NULL
-              AND m.text != ''
+              AND (
+                (m.text IS NOT NULL AND m.text != '')
+                OR m.attributedBody IS NOT NULL
+              )
             ORDER BY m.date ASC
         """
         cursor.execute(query, (*SELF_HANDLES, since_ts))
@@ -180,14 +182,16 @@ def fetch_new_messages(since_ts=None):
             datetime.now().astimezone().replace(microsecond=0)
         ) - (3600 * 1_000_000_000)
         query = f"""
-            SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.thread_originator_guid
+            SELECT m.ROWID, m.date, m.text, m.is_from_me, m.guid, m.thread_originator_guid, m.attributedBody
             FROM message m
             JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
             JOIN chat c ON cmj.chat_id = c.ROWID
             WHERE c.chat_identifier IN ({placeholders})
               AND m.date > ?
-              AND m.text IS NOT NULL
-              AND m.text != ''
+              AND (
+                (m.text IS NOT NULL AND m.text != '')
+                OR m.attributedBody IS NOT NULL
+              )
             ORDER BY m.date ASC
         """
         cursor.execute(query, (*SELF_HANDLES, one_hour_ago))
@@ -195,6 +199,66 @@ def fetch_new_messages(since_ts=None):
     messages = cursor.fetchall()
     conn.close()
     return messages
+
+
+def extract_message_text(text_column, attributed_body_column):
+    """
+    Extract readable text from either text column or attributedBody column.
+
+    Some messages (like those sent via iMessage apps/extensions) store their
+    text in the attributedBody blob instead of the text column.
+
+    Args:
+        text_column: The m.text value from database (str or None)
+        attributed_body_column: The m.attributedBody value from database (bytes or None)
+
+    Returns:
+        Extracted text string, or None if no text found
+    """
+    # Try text column first
+    if text_column:
+        return text_column
+
+    # Fall back to attributedBody
+    if attributed_body_column:
+        try:
+            # Decode the binary blob
+            decoded = attributed_body_column.decode('utf-8', errors='ignore')
+
+            # Extract text between NSString markers
+            # The actual message text appears between # markers in the NSString section
+            # Pattern: #<TEXT># where text is the actual message content
+            import re
+            match = re.search(r'#([^#]+?)#', decoded)
+            if match:
+                # Strip any trailing control characters or markers
+                extracted = match.group(1)
+                extracted = re.sub(r'[\x00-\x1f]+.*$', '', extracted)  # Remove control chars and everything after
+                extracted = extracted.strip()
+                if extracted and len(extracted) > 1:  # Must be substantial text
+                    return extracted
+
+            # Alternative pattern: NSMutableString may have different markers
+            match = re.search(r'NSString\+[^A-Za-z]*([A-Z][^i\x00-\x1f]+?)(?:iI|NS)', decoded)
+            if match:
+                extracted = match.group(1).strip()
+                if extracted:
+                    return extracted
+
+            # Fallback: extract any substantial printable text that looks like real content
+            printable = ''.join(c for c in decoded if c.isprintable())
+            if len(printable) > 10:  # Must be substantial text
+                # Remove common NSAttributedString artifacts
+                cleaned = re.sub(r'(streamtyped|@NSAttributedString|@NSMutableAttributedString|NSObject|NSDictionary|NSNumber|NSValue|NSString\+|\*|#|iI)', '', printable)
+                cleaned = re.sub(r'__k\w+', '', cleaned)  # Remove __kIM* markers
+                cleaned = cleaned.strip()
+                # Must start with actual text (letter or @ for mentions)
+                if cleaned and (cleaned[0].isalpha() or cleaned[0] == '@'):
+                    return cleaned
+        except Exception:
+            pass
+
+    return None
 
 
 def sanitize_filename(text, max_length=50):
@@ -499,7 +563,17 @@ def main():
     print(f"Processing {len(messages)} new message(s)...")
 
     newest_ts = last_ts
-    for rowid, apple_ts, text, is_from_me, guid, thread_originator_guid in messages:
+    for rowid, apple_ts, text_col, is_from_me, guid, thread_originator_guid, attributed_body in messages:
+        # Extract actual text from either text column or attributedBody
+        text = extract_message_text(text_col, attributed_body)
+
+        # Skip if no text could be extracted
+        if not text:
+            print(f"Skipping message {guid}: no extractable text")
+            if newest_ts is None or apple_ts > newest_ts:
+                newest_ts = apple_ts
+            continue
+
         # Skip system messages (feedback requests, report notifications)
         if is_system_message(text):
             print(f"Skipping system message: {text[:40]}...")
