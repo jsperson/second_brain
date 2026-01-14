@@ -128,7 +128,7 @@ INBOX_PROCESSOR_TEMPLATE = '''<?xml version="1.0" encoding="UTF-8"?>
 
     <!-- Fallback: also run periodically in case WatchPaths misses something -->
     <key>StartInterval</key>
-    <integer>1800</integer>
+    <integer>{processor_interval}</integer>
 
     <!-- Also run immediately when loaded -->
     <key>RunAtLoad</key>
