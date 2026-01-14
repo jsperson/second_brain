@@ -242,8 +242,9 @@ def extract_message_text(text_column, attributed_body_column):
                 if extracted and len(extracted) > 1:
                     return extracted
 
-            # Pattern 2: +F<TEXT> or +f<TEXT> (text after +F, before next control char)
-            match = re.search(r'\+[Ff]([^\x00-\x1f]+)', decoded)
+            # Pattern 2: +<char><TEXT>\x02iI (text after +<any char>, before \x02iI marker)
+            # Handles various prefixes: +F, +f, +/, +:, +%, etc.
+            match = re.search(r'\+.([^\x02]+)\x02iI', decoded)
             if match:
                 extracted = match.group(1).strip()
                 if extracted and len(extracted) > 1:
